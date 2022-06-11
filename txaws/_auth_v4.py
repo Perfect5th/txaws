@@ -4,8 +4,8 @@ AWS authorization, version 4.
 """
 import hashlib
 import hmac
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 
 import attr
 
@@ -78,9 +78,9 @@ def makeDateStamp(instant):
     @type instant: L{datetime.datetime}
 
     @return: The formatted date and time.
-    @rtype: L{str} (native string).
+    @rtype: L{bytes}.
     """
-    return instant.strftime('%Y%m%d')
+    return instant.strftime('%Y%m%d').encode()
 
 
 def _make_canonical_uri(parsed):
@@ -94,10 +94,10 @@ def _make_canonical_uri(parsed):
     @return: The canonical URI.
     @rtype: L{str}
     """
-    path = urllib.quote(parsed.path)
+    path = urllib.parse.quote(parsed.path)
     canonical_parsed = parsed._replace(path=path,
                                        params='', query='', fragment='')
-    return urlparse.urlunparse(canonical_parsed)
+    return urllib.parse.urlunparse(canonical_parsed)
 
 
 def _make_canonical_query_string(parsed):
@@ -111,11 +111,11 @@ def _make_canonical_query_string(parsed):
     @return: The canonical query string.
     @rtype: L{str}
     """
-    query_params = urlparse.parse_qs(parsed.query, keep_blank_values=True)
+    query_params = urllib.parse.parse_qs(parsed.query, keep_blank_values=True)
     sorted_query_params = sorted((k, v)
-                                 for k, vs in query_params.items()
+                                 for k, vs in list(query_params.items())
                                  for v in vs)
-    return urllib.urlencode(sorted_query_params)
+    return urllib.parse.urlencode(sorted_query_params)
 
 
 def _make_canonical_headers(headers, headers_to_sign):
@@ -127,10 +127,10 @@ def _make_canonical_headers(headers, headers_to_sign):
 
     @param headers_to_sign: A sequence of header names that should be
         signed.
-    @type headers_to_sign: A sequence of L{bytes}
+    @type headers_to_sign: A sequence of L{str}
 
     @return: The canonicalized headers.
-    @rtype: L{bytes}
+    @rtype: L{str}
     """
     pairs = []
     for name in headers_to_sign:
@@ -139,14 +139,14 @@ def _make_canonical_headers(headers, headers_to_sign):
         values = headers[name]
         if not isinstance(values, (list, tuple)):
             values = [values]
-        comma_values = b','.join(' '.join(line.strip().split())
+        comma_values = ','.join(' '.join(line.strip().split())
                                  for value in values
                                  for line in value.splitlines())
         pairs.append((name.lower(), comma_values))
 
-    sorted_pairs = sorted(b'%s:%s' % (name, value)
+    sorted_pairs = sorted('%s:%s' % (name, value)
                           for name, value in sorted(pairs))
-    return b'\n'.join(sorted_pairs) + b'\n'
+    return '\n'.join(sorted_pairs) + '\n'
 
 
 def _make_signed_headers(headers, headers_to_sign):
@@ -158,13 +158,13 @@ def _make_signed_headers(headers, headers_to_sign):
 
     @param headers_to_sign: A sequence of header names that should be
         signed.
-    @type headers_to_sign: L{bytes}
+    @type headers_to_sign: L{str}
 
     @return: The semicolon-delimited list of headers.
-    @rtype: L{bytes}
+    @rtype: L{str}
     """
-    return b";".join(header.lower() for header in sorted(headers_to_sign)
-                     if header in headers)
+    return ";".join(header.lower() for header in sorted(headers_to_sign)
+                    if header in headers)
 
 
 @attr.s(frozen=True)
@@ -215,12 +215,12 @@ class _CanonicalRequest(object):
         @param url: The request's URL
         @type url: L{str}
 
-        @param headers: The request's headers.
+        @param headers: The request's headers. A mapping of L{str} to L{str}.
         @type headers: L{dict}
 
         @param headers_to_sign: A sequence of header names that should
             be signed.
-        @type headers_to_sign: L{bytes}
+        @type headers_to_sign: L{str}
 
         @param payload_hash: The hex digest of the sha256 hash of the
             request's body.  If the body is empty, the hex digest of
@@ -236,7 +236,7 @@ class _CanonicalRequest(object):
             I{x-amz-content-sha256} header set to
             C{b"UNSIGNED-PAYLOAD"}.
         """
-        parsed = urlparse.urlparse(url)
+        parsed = urllib.parse.urlparse(url)
         if payload_hash is None:
             # This magic string tells AWS to disregard the payload for
             # purposes of signing.  The x-amz-content-sha256 header
@@ -284,7 +284,8 @@ class _CanonicalRequest(object):
             request.
         @rtype: L{str}
         """
-        return b'\n'.join(attr.astuple(self))
+        return b'\n'.join(a.encode() if type(a) == str else a
+                          for a in attr.astuple(self))
 
     def hash(self):
         """
@@ -294,7 +295,7 @@ class _CanonicalRequest(object):
             serialization.
         @rtype: L{str}
         """
-        return hashlib.sha256(self.serialize()).hexdigest()
+        return hashlib.sha256(self.serialize()).hexdigest().encode()
 
 
 @attr.s(frozen=True)
@@ -323,9 +324,11 @@ class _CredentialScope(object):
         Serialize this credential scope to a string.
 
         @return: The slash-delimited credential scope serialization.
-        @rtype: L{str}
+        @rtype: L{bytes}
         """
-        return "/".join(attr.astuple(self) + ('aws4_request',))
+        return b"/".join(tuple(a.encode() if type(a) == str else a
+                               for a in attr.astuple(self)) +
+                         (b'aws4_request',))
 
 
 @attr.s(frozen=True)
@@ -347,12 +350,13 @@ class _Credential(object):
 
     def serialize(self):
         """
-        Serialize this credential bundle to a string.
+        Serialize this credential bundle to bytes.
 
         @return: The serialized credential.
-        @rtype: L{str}
+        @rtype: L{byte}
         """
-        return "/".join([self.access_key, self.credential_scope.serialize()])
+        return b"/".join(
+            [self.access_key.encode(), self.credential_scope.serialize()])
 
 
 @attr.s(frozen=True)
@@ -373,7 +377,7 @@ class _SignableAWS4HMAC256Token(object):
     @type canonical_request: L{_CanonicalRequest}
     """
 
-    ALGORITHM = "AWS4-HMAC-SHA256"
+    ALGORITHM = b"AWS4-HMAC-SHA256"
 
     amz_date = attr.ib()
     credential_scope = attr.ib()
@@ -385,11 +389,11 @@ class _SignableAWS4HMAC256Token(object):
 
         @return: The serialization of this token.  This is known in
             the AWS documentation as "the string to sign."
-        @rtype: L{str}
+        @rtype: L{bytes}
         """
-        return "\n".join([
+        return b"\n".join([
             self.ALGORITHM,
-            self.amz_date,
+            self.amz_date.encode(),
             self.credential_scope.serialize(),
             self.canonical_request.hash(),
         ])
@@ -400,16 +404,16 @@ class _SignableAWS4HMAC256Token(object):
 
         @param signing_key: The signing key.  Not just your secret
             key!  See L{getSignatureKey}
-        @type: L{str}
+        @type: L{bytes}
 
         @return: the HMAC-256 signature.
-        @rtype: L{str}
+        @rtype: L{bytes}
         """
         return hmac.new(
             signing_key,
             self.serialize(),
             hashlib.sha256,
-        ).hexdigest()
+        ).hexdigest().encode()
 
 
 def _make_authorization_header(region,
@@ -457,10 +461,10 @@ def _make_authorization_header(region,
     )
 
     signature = signable.signature(
-        getSignatureKey(credentials.secret_key,
+        getSignatureKey(credentials.secret_key.encode(),
                         date_stamp,
-                        region,
-                        service)
+                        region.encode(),
+                        service.encode())
     )
 
     v4credential = _Credential(
@@ -472,6 +476,6 @@ def _make_authorization_header(region,
         b"%s " % (_SignableAWS4HMAC256Token.ALGORITHM,) +
         b", ".join([
             b"Credential=%s" % (v4credential.serialize(),),
-            b"SignedHeaders=%s" % (canonical_request.signed_headers,),
+            b"SignedHeaders=%s" % (canonical_request.signed_headers.encode(),),
             b"Signature=%s" % (signature,),
         ]))

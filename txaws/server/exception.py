@@ -28,5 +28,5 @@ class APIError(Exception):
         # This avoids an exception when twisted logger logs the message, as it
         # currently doesn't support unicode.
         if self.message is not None:
-            return self.message.encode("ascii", "replace")
+            return self.message.encode("ascii", "replace").decode()
         return ""

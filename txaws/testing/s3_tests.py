@@ -7,7 +7,6 @@ Integration tests for the S3 client(s).
 from io import BytesIO
 from uuid import uuid4
 
-from twisted.python.compat import unicode
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import inlineCallbacks, gatherResults
 from twisted.internet.task import cooperate
@@ -69,8 +68,8 @@ def s3_integration_tests(get_client):
             ``delete_object``.
             """
             bucket_name = str(uuid4())
-            object_name = b"foo/bar"
-            object_data = b"hello world"
+            object_name = "foo/bar"
+            object_data = "hello world"
 
             client = get_client(self)
 
@@ -86,7 +85,7 @@ def s3_integration_tests(get_client):
                 1, len(created),
                 "Expected to find created object in listing {}".format(objects),
             )
-            self.assertEqual(objects.is_truncated, u"false")
+            self.assertEqual(objects.is_truncated, "false")
 
             self.assertEqual(str(len(object_data)), created[0].size)
 
@@ -110,14 +109,14 @@ def s3_integration_tests(get_client):
             The objects returned by C{get_bucket} are sorted lexicographically by their
             key.
             """
-            bucket_name = unicode(uuid4())
+            bucket_name = str(uuid4())
             client = get_client(self)
             d = client.create_bucket(bucket_name)
             def created_bucket(ignored):
                 return gatherResults([
-                    client.put_object(bucket_name, u"b"),
-                    client.put_object(bucket_name, u"a"),
-                    client.put_object(bucket_name, u"c"),
+                    client.put_object(bucket_name, "b"),
+                    client.put_object(bucket_name, "a"),
+                    client.put_object(bucket_name, "c"),
             ])
             d.addCallback(created_bucket)
             def created_objects(ignored):
@@ -125,7 +124,7 @@ def s3_integration_tests(get_client):
             d.addCallback(created_objects)
             def got_objects(listing):
                 self.assertEqual(
-                    [u"a", u"b", u"c"],
+                    ["a", "b", "c"],
                     list(item.key for item in listing.contents),
                 )
             d.addCallback(got_objects)
@@ -137,14 +136,14 @@ def s3_integration_tests(get_client):
             A subset of S3 objects in a bucket can be retrieved by specifying a value
             for the ``prefix`` argument to ``get_bucket``.
             """
-            bucket_name = unicode(uuid4())
+            bucket_name = str(uuid4())
             client = get_client(self)
             yield client.create_bucket(bucket_name)
-            yield client.put_object(bucket_name, u"a", b"foo")
-            yield client.put_object(bucket_name, u"b", b"bar")
+            yield client.put_object(bucket_name, "a", b"foo")
+            yield client.put_object(bucket_name, "b", b"bar")
 
-            objects = yield client.get_bucket(bucket_name, prefix=b"a")
-            self.assertEqual([b"a"], list(obj.key for obj in objects.contents))
+            objects = yield client.get_bucket(bucket_name, prefix="a")
+            self.assertEqual(["a"], list(obj.key for obj in objects.contents))
 
         def test_get_bucket_location_empty(self):
             """
@@ -152,7 +151,7 @@ def s3_integration_tests(get_client):
             C{get_bucket_location} returns a L{Deferred} that fires
             C{b""}.
             """
-            bucket_name = unicode(uuid4())
+            bucket_name = str(uuid4())
             client = get_client(self)
             d = client.create_bucket(bucket_name)
             def created_bucket(ignored):
@@ -171,13 +170,13 @@ def s3_integration_tests(get_client):
             C{max_keys} can be passed to C{get_bucket} to limit the number of
             results.
             """
-            bucket_name = unicode(uuid4())
+            bucket_name = str(uuid4())
             client = get_client(self)
             d = client.create_bucket(bucket_name)
             def created_bucket(ignored):
                 # Put a few objects in it so we can retrieve some of them.
                 return gatherResults(list(
-                    client.put_object(bucket_name, unicode(i))
+                    client.put_object(bucket_name, str(i))
                     for i in range(3)
                 ))
             d.addCallback(created_bucket)
@@ -186,7 +185,7 @@ def s3_integration_tests(get_client):
             d.addCallback(put_objects)
             def got_objects(listing):
                 self.assertEqual(2, len(listing.contents))
-                self.assertEqual(listing.is_truncated, u"true")
+                self.assertEqual(listing.is_truncated, "true")
             d.addCallback(got_objects)
             return d
 
@@ -196,22 +195,22 @@ def s3_integration_tests(get_client):
             C{marker} can be passed to C{get_bucket} to specify the key in the result
             listing with which to start (the key after the value of C{marker}).
             """
-            bucket_name = unicode(uuid4())
+            bucket_name = str(uuid4())
             client = get_client(self)
             d = client.create_bucket(bucket_name)
             def created_bucket(ignored):
                 # Put a few objects in it so we can retrieve some of them.
                 return gatherResults(list(
-                    client.put_object(bucket_name, unicode(i))
+                    client.put_object(bucket_name, str(i))
                     for i in range(3)
                 ))
             d.addCallback(created_bucket)
             def created_objects(ignored):
-                return client.get_bucket(bucket_name, marker=u"0")
+                return client.get_bucket(bucket_name, marker="0")
             d.addCallback(created_objects)
             def got_objects(listing):
-                self.assertEqual(listing.marker, u"0")
-                self.assertEqual(u"1", listing.contents[0].key)
+                self.assertEqual(listing.marker, "0")
+                self.assertEqual("1", listing.contents[0].key)
             d.addCallback(got_objects)
             return d
 
@@ -222,13 +221,13 @@ def s3_integration_tests(get_client):
             not specified.
             """
             max_keys = 1000
-            bucket_name = unicode(uuid4())
+            bucket_name = str(uuid4())
             client = get_client(self)
             d = client.create_bucket(bucket_name)
             def created_bucket(ignored):
                 # Put a bunch of objects.  The default limit is 1000.
                 work = (
-                    client.put_object(bucket_name, unicode(i).encode("ascii"))
+                    client.put_object(bucket_name, str(i))
                     for i in range(max_keys + 3)
                 )
                 return gatherResults([
@@ -315,7 +314,7 @@ def s3_integration_tests(get_client):
             object_names = [
                 b'object:with:colons',
                 b'object with spaces',
-                u'\N{SNOWMAN}'.encode('utf-8'),
+                '\N{SNOWMAN}'.encode('utf-8'),
                 ]
             object_data = b'some text'
             object_type = b'application/x-txaws-integration-testing'

@@ -194,7 +194,7 @@ class QueryAPI(Resource):
         the client used to sign the request. Note that this data must not
         contain the signature itself.
         """
-        params = dict((k, v[-1]) for k, v in request.args.iteritems())
+        params = dict((k, v[-1]) for k, v in list(request.args.items()))
         args, rest = self.schema.extract(params)
         # Get rid of Signature so it doesn't mess with signature verification
         params.pop("Signature")

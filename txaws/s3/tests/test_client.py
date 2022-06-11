@@ -1,7 +1,7 @@
 import datetime
 from hashlib import sha256
 import warnings
-from urllib import quote
+from urllib.parse import quote
 
 from attr import assoc
 
@@ -22,8 +22,8 @@ from txaws.testing import payload
 from txaws.testing.integration import get_live_service
 from txaws.util import calculate_md5
 
-
-EMPTY_CONTENT_SHA256 = sha256(b"").hexdigest().decode("ascii")
+REGION_US_EAST_1 = REGION_US_EAST_1.encode()
+EMPTY_CONTENT_SHA256 = sha256(b"").hexdigest()
 
 
 class URLContextTestCase(TestCase):
@@ -32,36 +32,36 @@ class URLContextTestCase(TestCase):
 
     def test_get_host_with_no_bucket(self):
         url_context = client.URLContext(self.endpoint)
-        self.assertEquals(url_context.get_host(), b"s3.amazonaws.com")
+        self.assertEqual(url_context.get_host(), b"s3.amazonaws.com")
 
     def test_get_host_with_bucket(self):
         url_context = client.URLContext(self.endpoint, "mystuff")
-        self.assertEquals(url_context.get_host(), b"s3.amazonaws.com")
+        self.assertEqual(url_context.get_host(), b"s3.amazonaws.com")
 
     def test_get_path_with_no_bucket(self):
         url_context = client.URLContext(self.endpoint)
-        self.assertEquals(url_context.get_path(), b"/")
+        self.assertEqual(url_context.get_path(), b"/")
 
     def test_get_path_with_bucket(self):
         url_context = client.URLContext(self.endpoint, bucket="mystuff")
-        self.assertEquals(url_context.get_path(), b"/mystuff/")
+        self.assertEqual(url_context.get_path(), b"/mystuff/")
 
     def test_get_path_with_bucket_and_object(self):
         url_context = client.URLContext(
             self.endpoint, bucket="mystuff", object_name="/images/thing.jpg")
-        self.assertEquals(url_context.get_host(), b"s3.amazonaws.com")
-        self.assertEquals(url_context.get_path(), b"/mystuff/images/thing.jpg")
+        self.assertEqual(url_context.get_host(), b"s3.amazonaws.com")
+        self.assertEqual(url_context.get_path(), b"/mystuff/images/thing.jpg")
 
     def test_get_path_with_bucket_and_object_without_slash(self):
         url_context = client.URLContext(
             self.endpoint, bucket="mystuff", object_name="images/thing.jpg")
-        self.assertEquals(url_context.get_host(), b"s3.amazonaws.com")
-        self.assertEquals(url_context.get_path(), b"/mystuff/images/thing.jpg")
+        self.assertEqual(url_context.get_host(), b"s3.amazonaws.com")
+        self.assertEqual(url_context.get_path(), b"/mystuff/images/thing.jpg")
 
     def test_get_url_with_bucket_and_object_with_resource(self):
         url_context = client.URLContext(
             self.endpoint, bucket="mystuff", object_name="thing.jpg?acls")
-        self.assertEquals(
+        self.assertEqual(
             url_context.get_url(),
             b"https://s3.amazonaws.com/mystuff/thing.jpg?acls",
         )
@@ -69,7 +69,7 @@ class URLContextTestCase(TestCase):
     def test_get_url_with_bucket_and_query(self):
         url_context = client.URLContext(
             self.endpoint, bucket="mystuff", object_name="?max-keys=3")
-        self.assertEquals(
+        self.assertEqual(
             url_context.get_url(),
             b"https://s3.amazonaws.com/mystuff/?max-keys=3",
         )
@@ -77,37 +77,37 @@ class URLContextTestCase(TestCase):
     def test_get_url_with_custom_endpoint(self):
         endpoint = AWSServiceEndpoint("http://localhost/")
         url_context = client.URLContext(endpoint)
-        self.assertEquals(url_context.get_url(), b"http://localhost/")
+        self.assertEqual(url_context.get_url(), b"http://localhost/")
 
     def test_get_uri_with_endpoint_bucket_and_object(self):
         endpoint = AWSServiceEndpoint("http://localhost/")
         url_context = client.URLContext(
             endpoint, bucket="mydocs", object_name="notes.txt")
-        self.assertEquals(
+        self.assertEqual(
             url_context.get_url(),
             b"http://localhost/mydocs/notes.txt")
 
     def test_custom_port_endpoint(self):
         test_uri = b'http://0.0.0.0:12345/'
         endpoint = AWSServiceEndpoint(uri=test_uri)
-        self.assertEquals(endpoint.port, 12345)
-        self.assertEquals(endpoint.scheme, 'http')
+        self.assertEqual(endpoint.port, 12345)
+        self.assertEqual(endpoint.scheme, 'http')
         context = client.URLContext(service_endpoint=endpoint,
                 bucket="foo",
                 object_name="bar")
-        self.assertEquals(context.get_host(), b'0.0.0.0')
-        self.assertEquals(context.get_url(), test_uri + b'foo/bar')
+        self.assertEqual(context.get_host(), b'0.0.0.0')
+        self.assertEqual(context.get_url(), test_uri + b'foo/bar')
 
     def test_custom_port_endpoint_https(self):
         test_uri = 'https://0.0.0.0:12345/'
         endpoint = AWSServiceEndpoint(uri=test_uri)
-        self.assertEquals(endpoint.port, 12345)
-        self.assertEquals(endpoint.scheme, 'https')
+        self.assertEqual(endpoint.port, 12345)
+        self.assertEqual(endpoint.scheme, 'https')
         context = client.URLContext(service_endpoint=endpoint,
                 bucket="foo",
                 object_name="bar")
-        self.assertEquals(context.get_host(), b'0.0.0.0')
-        self.assertEquals(context.get_url(), test_uri + b'foo/bar')
+        self.assertEqual(context.get_host(), b'0.0.0.0')
+        self.assertEqual(context.get_url(), test_uri.encode() + b'foo/bar')
 
 
 class S3URLContextTestCase(TestCase):
@@ -121,12 +121,12 @@ class S3URLContextTestCase(TestCase):
         """
         test_uri = b"https://0.0.0.0:12345/"
         endpoint = AWSServiceEndpoint(uri=test_uri)
-        bucket = u"\N{SNOWMAN}"
+        bucket = "\N{SNOWMAN}"
         context = client.s3_url_context(endpoint, bucket)
         url = context.get_url()
         self.assertIsInstance(url, bytes)
         self.assertEqual(
-            test_uri + quote(bucket.encode("utf-8"), safe=b"") + b"/",
+            test_uri + quote(bucket, safe="").encode() + b"/",
             url,
         )
 
@@ -138,12 +138,12 @@ class S3URLContextTestCase(TestCase):
         test_uri = b"https://0.0.0.0:12345/"
         endpoint = AWSServiceEndpoint(uri=test_uri)
         bucket = b"mybucket"
-        object_name = u"\N{SNOWMAN}"
+        object_name = "\N{SNOWMAN}"
         context = client.s3_url_context(endpoint, bucket, object_name)
         url = context.get_url()
         self.assertIsInstance(url, bytes)
         self.assertEqual(
-            test_uri + (bucket + b"/" + quote(object_name.encode("utf-8"), safe=b"")),
+            test_uri + (bucket + b"/" + quote(object_name, safe="").encode()),
             url,
         )
 
@@ -186,12 +186,12 @@ class S3ClientTestCase(TestCase):
 
         def check_list_buckets(results):
             bucket1, bucket2 = results
-            self.assertEquals(bucket1.name, "quotes")
-            self.assertEquals(
+            self.assertEqual(bucket1.name, "quotes")
+            self.assertEqual(
                 bucket1.creation_date.timetuple(),
                 (2006, 2, 3, 16, 45, 9, 4, 34, 0))
-            self.assertEquals(bucket2.name, "samples")
-            self.assertEquals(
+            self.assertEqual(bucket2.name, "samples")
+            self.assertEqual(
                 bucket2.creation_date.timetuple(),
                 (2006, 2, 3, 16, 41, 58, 4, 34, 0))
 
@@ -245,26 +245,26 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(listing):
-            self.assertEquals(listing.name, "mybucket")
-            self.assertEquals(listing.prefix, "N")
-            self.assertEquals(listing.marker, "Ned")
-            self.assertEquals(listing.max_keys, "40")
-            self.assertEquals(listing.is_truncated, "false")
-            self.assertEquals(len(listing.contents), 2)
+            self.assertEqual(listing.name, "mybucket")
+            self.assertEqual(listing.prefix, "N")
+            self.assertEqual(listing.marker, "Ned")
+            self.assertEqual(listing.max_keys, "40")
+            self.assertEqual(listing.is_truncated, "false")
+            self.assertEqual(len(listing.contents), 2)
             content1 = listing.contents[0]
-            self.assertEquals(content1.key, "Nelson")
-            self.assertEquals(
+            self.assertEqual(content1.key, "Nelson")
+            self.assertEqual(
                 content1.modification_date.timetuple(),
                 (2006, 1, 1, 12, 0, 0, 6, 1, 0))
-            self.assertEquals(
+            self.assertEqual(
                 content1.etag, '"828ef3fdfa96f00ad9f27c383fc9ac7f"')
-            self.assertEquals(content1.size, "5")
-            self.assertEquals(content1.storage_class, "STANDARD")
+            self.assertEqual(content1.size, "5")
+            self.assertEqual(content1.storage_class, "STANDARD")
             owner = content1.owner
-            self.assertEquals(owner.id,
+            self.assertEqual(owner.id,
                               "bcaf1ffd86f41caff1a493dc2ad8c2c281e37522a640e16"
                               "1ca5fb16fd081034f")
-            self.assertEquals(owner.display_name, "webfile")
+            self.assertEqual(owner.display_name, "webfile")
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -335,7 +335,7 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(location_constraint):
-            self.assertEquals(location_constraint, "EU")
+            self.assertEqual(location_constraint, "EU")
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -370,10 +370,10 @@ class S3ClientTestCase(TestCase):
         def check_results(lifecycle_config):
             self.assertTrue(len(lifecycle_config.rules) == 2)
             rule = lifecycle_config.rules[1]
-            self.assertEquals(rule.id, 'another-id')
-            self.assertEquals(rule.prefix, 'another-logs')
-            self.assertEquals(rule.status, 'Disabled')
-            self.assertEquals(rule.expiration, 37)
+            self.assertEqual(rule.id, 'another-id')
+            self.assertEqual(rule.prefix, 'another-logs')
+            self.assertEqual(rule.status, 'Disabled')
+            self.assertEqual(rule.expiration, 37)
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -407,10 +407,10 @@ class S3ClientTestCase(TestCase):
 
         def check_results(lifecycle_config):
             rule = lifecycle_config.rules[0]
-            self.assertEquals(rule.id, '30-day-log-deletion-rule')
-            self.assertEquals(rule.prefix, 'logs')
-            self.assertEquals(rule.status, 'Enabled')
-            self.assertEquals(rule.expiration, 30)
+            self.assertEqual(rule.id, '30-day-log-deletion-rule')
+            self.assertEqual(rule.prefix, 'logs')
+            self.assertEqual(rule.status, 'Enabled')
+            self.assertEqual(rule.expiration, 30)
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -443,8 +443,8 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(website_config):
-            self.assertEquals(website_config.index_suffix, "index.html")
-            self.assertEquals(website_config.error_key, None)
+            self.assertEqual(website_config.index_suffix, "index.html")
+            self.assertEqual(website_config.error_key, None)
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -477,8 +477,8 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(website_config):
-            self.assertEquals(website_config.index_suffix, "index.html")
-            self.assertEquals(website_config.error_key, "404.html")
+            self.assertEqual(website_config.index_suffix, "index.html")
+            self.assertEqual(website_config.error_key, "404.html")
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -511,8 +511,8 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(notification_config):
-            self.assertEquals(notification_config.topic, None)
-            self.assertEquals(notification_config.event, None)
+            self.assertEqual(notification_config.topic, None)
+            self.assertEqual(notification_config.event, None)
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -546,9 +546,9 @@ class S3ClientTestCase(TestCase):
 
 
         def check_results(notification_config):
-            self.assertEquals(notification_config.topic,
+            self.assertEqual(notification_config.topic,
                               "arn:aws:sns:us-east-1:123456789012:myTopic")
-            self.assertEquals(notification_config.event,
+            self.assertEqual(notification_config.event,
                               "s3:ReducedRedundancyLostObject")
 
         creds = AWSCredentials("foo", "bar")
@@ -582,7 +582,7 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(versioning_config):
-            self.assertEquals(versioning_config.status, None)
+            self.assertEqual(versioning_config.status, None)
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -616,7 +616,7 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(versioning_config):
-            self.assertEquals(versioning_config.status, 'Enabled')
+            self.assertEqual(versioning_config.status, 'Enabled')
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -650,7 +650,7 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_results(versioning_config):
-            self.assertEquals(versioning_config.mfa_delete, 'Disabled')
+            self.assertEqual(versioning_config.mfa_delete, 'Disabled')
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -694,8 +694,8 @@ class S3ClientTestCase(TestCase):
                     method=b"PUT",
                     url_context=client.s3_url_context(self.endpoint, "mybucket", "?acl"),
                     content_sha256=sha256(
-                        payload.sample_access_control_policy_result
-                    ).hexdigest().decode("ascii"),
+                        payload.sample_access_control_policy_result.encode()
+                    ).hexdigest(),
                 ),
                 assoc(query_factory.details, body_producer=None),
             )
@@ -731,7 +731,7 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_result(result):
-            self.assert_(isinstance(result, AccessControlPolicy))
+            self.assertTrue(isinstance(result, AccessControlPolicy))
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -761,7 +761,7 @@ class S3ClientTestCase(TestCase):
                     region=REGION_US_EAST_1,
                     method=b"PUT",
                     url_context=client.s3_url_context(self.endpoint, "mybucket", "?requestPayment"),
-                    content_sha256=sha256(xml).hexdigest().decode("ascii"),
+                    content_sha256=sha256(xml.encode()).hexdigest(),
                 ),
                 assoc(query_factory.details, body_producer=None),
             )
@@ -797,7 +797,7 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_request_payment(result):
-            self.assertEquals(result, "Requester")
+            self.assertEqual(result, "Requester")
 
         creds = AWSCredentials("foo", "bar")
         s3 = client.S3Client(creds, query_factory=query_factory)
@@ -817,12 +817,12 @@ class S3ClientTestCase(TestCase):
                     region=REGION_US_EAST_1,
                     method=b"PUT",
                     url_context=client.s3_url_context(self.endpoint, "mybucket", "objectname"),
-                    headers=Headers({u"content-type": [u"text/plain"]}),
+                    headers=Headers({"content-type": ["text/plain"]}),
                     metadata={"key": "some meta data"},
                     amz_headers={
                         "acl": "public-read",
                     },
-                    content_sha256=sha256(b"some data").hexdigest().decode("ascii"),
+                    content_sha256=sha256(b"some data").hexdigest(),
                 ),
                 assoc(query_factory.details, body_producer=None),
             )
@@ -850,7 +850,7 @@ class S3ClientTestCase(TestCase):
                     region=REGION_US_EAST_1,
                     method=b"PUT",
                     url_context=client.s3_url_context(self.endpoint, "mybucket", "objectname"),
-                    headers=Headers({u"content-type": [u"text/plain"]}),
+                    headers=Headers({"content-type": ["text/plain"]}),
                     metadata={"key": "some meta data"},
                     amz_headers={
                         "acl": "public-read",
@@ -989,8 +989,8 @@ class S3ClientTestCase(TestCase):
                     method=b"PUT",
                     url_context=client.s3_url_context(self.endpoint, "mybucket", "myobject?acl"),
                     content_sha256=sha256(
-                        payload.sample_access_control_policy_result
-                    ).hexdigest().decode("ascii"),
+                        payload.sample_access_control_policy_result.encode()
+                    ).hexdigest(),
                 ),
                 assoc(query_factory.details, body_producer=None),
             )
@@ -1058,7 +1058,7 @@ class S3ClientTestCase(TestCase):
             return passthrough
 
         def check_result(result):
-            self.assert_(isinstance(result, MultipartInitiationResponse))
+            self.assertTrue(isinstance(result, MultipartInitiationResponse))
             self.assertEqual(result.bucket, "example-bucket")
             self.assertEqual(result.object_name, "example-object")
             self.assertEqual(result.upload_id, "deadbeef")
@@ -1084,7 +1084,7 @@ class S3ClientTestCase(TestCase):
                     url_context=client.s3_url_context(
                         self.endpoint, "example-bucket", "example-object?partNumber=3&uploadId=testid"
                     ),
-                    content_sha256=sha256(b"some data").hexdigest().decode("ascii"),
+                    content_sha256=sha256(b"some data").hexdigest(),
                 ),
                 assoc(query_factory.details, body_producer=None),
             )
@@ -1117,14 +1117,14 @@ class S3ClientTestCase(TestCase):
                     url_context=client.s3_url_context(
                         self.endpoint, "example-bucket", "example-object?uploadId=testid"
                     ),
-                    content_sha256=sha256(xml).hexdigest().decode("ascii"),
+                    content_sha256=sha256(xml.encode()).hexdigest(),
                 ),
                 assoc(query_factory.details, body_producer=None),
             )
             return passthrough
 
         def check_result(result):
-            self.assert_(isinstance(result, MultipartCompletionResponse))
+            self.assertTrue(isinstance(result, MultipartCompletionResponse))
             self.assertEqual(result.bucket, "example-bucket")
             self.assertEqual(result.object_name, "example-object")
             self.assertEqual(result.location,
@@ -1156,35 +1156,35 @@ class QueryTestCase(TestCase):
 
     def test_default_creation(self):
         query = client.Query(action="PUT")
-        self.assertEquals(query.bucket, None)
-        self.assertEquals(query.object_name, None)
-        self.assertEquals(query.data, "")
-        self.assertEquals(query.content_type, None)
-        self.assertEquals(query.metadata, {})
+        self.assertEqual(query.bucket, None)
+        self.assertEqual(query.object_name, None)
+        self.assertEqual(query.data, "")
+        self.assertEqual(query.content_type, None)
+        self.assertEqual(query.metadata, {})
 
     def test_default_endpoint(self):
         query = client.Query(action="PUT")
-        self.assertEquals(self.endpoint.host, "choopy.s3.amazonaws.com")
-        self.assertEquals(query.endpoint.host, "s3.amazonaws.com")
-        self.assertEquals(self.endpoint.method, "GET")
-        self.assertEquals(query.endpoint.method, "PUT")
+        self.assertEqual(self.endpoint.host, "choopy.s3.amazonaws.com")
+        self.assertEqual(query.endpoint.host, "s3.amazonaws.com")
+        self.assertEqual(self.endpoint.method, "GET")
+        self.assertEqual(query.endpoint.method, "PUT")
 
     def test_set_content_type_no_object_name(self):
         query = client.Query(action="PUT")
         query.set_content_type()
-        self.assertEquals(query.content_type, None)
+        self.assertEqual(query.content_type, None)
 
     def test_set_content_type(self):
         query = client.Query(action="PUT", object_name="advicedog.jpg")
         query.set_content_type()
-        self.assertEquals(query.content_type, "image/jpeg")
+        self.assertEqual(query.content_type, "image/jpeg")
 
     def test_set_content_type_with_content_type_already_set(self):
         query = client.Query(
             action="PUT", object_name="data.txt", content_type="text/csv")
         query.set_content_type()
-        self.assertNotEquals(query.content_type, "text/plain")
-        self.assertEquals(query.content_type, "text/csv")
+        self.assertNotEqual(query.content_type, "text/plain")
+        self.assertEqual(query.content_type, "text/csv")
 
     def test_get_headers(self):
         query = client.Query(
@@ -1192,8 +1192,8 @@ class QueryTestCase(TestCase):
             object_name="/images/thing.jpg")
 
         headers = query.get_headers(self.utc_instant)
-        self.assertEquals(headers.get("Content-Type"), "image/jpeg")
-        self.assertEquals(
+        self.assertEqual(headers.get("Content-Type"), "image/jpeg")
+        self.assertEqual(
             headers.get("x-amz-content-sha256"),
             sha256(b"").hexdigest(),
         )
@@ -1208,22 +1208,22 @@ class QueryTestCase(TestCase):
             object_name="/images/thing.jpg", data="BINARY IMAGE DATA")
 
         headers = query.get_headers(self.utc_instant)
-        self.assertEquals(headers.get("Content-Type"), "image/jpeg")
+        self.assertEqual(headers.get("Content-Type"), "image/jpeg")
         self.assertEqual(headers.get("x-amz-date"), "20150830T123600Z")
         self.assertTrue(
             headers.get("Authorization").startswith("AWS4-HMAC-SHA256"))
         self.assertTrue(len(headers.get("Authorization")) > 40)
 
     def test_sign(self):
-        query = client.Query(action="PUT", creds=self.creds, data="data")
+        query = client.Query(action="PUT", creds=self.creds, data=b"data")
         signed = query.sign(headers={"x-amz-date": "20150830T123600Z"},
-                            data="some data",
+                            data=b"some data",
                             url_context=client.URLContext(query.endpoint,
                                                           query.bucket,
                                                           query.object_name),
                             instant=self.utc_instant,
                             method=query.action)
-        self.assertEquals(
+        self.assertEqual(
             signed,
             'AWS4-HMAC-SHA256 '
             'Credential=fookeyid/20150830/us-east-1/s3/aws4_request, '
@@ -1285,7 +1285,7 @@ class QueryTestCase(TestCase):
                 body_producer=None, receiver_factory=None):
                 super(StubQuery, query).__init__(
                     action=action, creds=creds, bucket=bucket)
-                self.assertEquals(action, "GET")
+                self.assertEqual(action, "GET")
                 self.assertEqual(creds.access_key, "fookeyid")
                 self.assertEqual(creds.secret_key, "barsecretkey")
                 self.assertEqual(query.bucket, "somebucket")

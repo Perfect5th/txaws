@@ -32,14 +32,14 @@ def route53_integration_tests(get_client):
             and ``delete_hosted_zone`` respectively.
             """
             zone_names = {
-                u"{}.example.invalid.".format(unicode(uuid4())),
-                u"{}.\N{SNOWMAN}.example.invalid.".format(unicode(uuid4())),
+                "{}.example.invalid.".format(str(uuid4())),
+                "{}.\N{SNOWMAN}.example.invalid.".format(str(uuid4())),
             }
 
             client = get_client(self)
 
             created_zones = yield gatherResults([
-                client.create_hosted_zone(u"{}-{}".format(time(), n), name)
+                client.create_hosted_zone("{}-{}".format(time(), n), name)
                 for n, name in enumerate(zone_names)
             ])
 
@@ -73,7 +73,7 @@ def route53_integration_tests(get_client):
             zone.
             """
             client = get_client(self)
-            d = client.list_resource_record_sets(u"abcdefg12345678")
+            d = client.list_resource_record_sets("abcdefg12345678")
             self.assertFailure(d, Route53Error)
             def got_error(error):
                 self.assertEqual(NOT_FOUND, int(error.status))
@@ -87,13 +87,13 @@ def route53_integration_tests(get_client):
             zone.
             """
             rrset = RRSet(
-                label=Name(u"foo.example.invalid."),
-                type=u"CNAME",
+                label=Name("foo.example.invalid."),
+                type="CNAME",
                 ttl=60,
-                records={CNAME(canonical_name=Name(u"bar.example.invalid."))},
+                records={CNAME(canonical_name=Name("bar.example.invalid."))},
             )
             client = get_client(self)
-            d = client.change_resource_record_sets(u"abcdefg12345678", [create_rrset(rrset)])
+            d = client.change_resource_record_sets("abcdefg12345678", [create_rrset(rrset)])
             self.assertFailure(d, Route53Error)
             def got_error(error):
                 self.assertEqual(NOT_FOUND, int(error.status))
@@ -105,16 +105,16 @@ def route53_integration_tests(get_client):
             """
             It is an error to attempt to create a rrset which already exists.
             """
-            zone_name = u"{}.test_create_existing_rrset.invalid.".format(uuid4())
+            zone_name = "{}.test_create_existing_rrset.invalid.".format(uuid4())
             rrset = RRSet(
-                label=Name(u"foo.{}".format(zone_name)),
-                type=u"CNAME",
+                label=Name("foo.{}".format(zone_name)),
+                type="CNAME",
                 ttl=60,
-                records={CNAME(canonical_name=Name(u"bar.example.invalid."))},
+                records={CNAME(canonical_name=Name("bar.example.invalid."))},
             )
 
             client = get_client(self)
-            d = client.create_hosted_zone(u"{}".format(time()), zone_name)
+            d = client.create_hosted_zone("{}".format(time()), zone_name)
             def created_zone(zone):
                 self.addCleanup(lambda: self._cleanup(client, zone.identifier))
                 d = client.change_resource_record_sets(zone.identifier, [create_rrset(rrset)])
@@ -139,16 +139,16 @@ def route53_integration_tests(get_client):
             """
             It is an error to attempt to delete an rrset which does not exist.
             """
-            zone_name = u"{}.test_delete_missing_rrset.invalid.".format(uuid4())
+            zone_name = "{}.test_delete_missing_rrset.invalid.".format(uuid4())
             rrset = RRSet(
-                label=Name(u"foo.{}".format(zone_name)),
-                type=u"CNAME",
+                label=Name("foo.{}".format(zone_name)),
+                type="CNAME",
                 ttl=60,
-                records={CNAME(canonical_name=Name(u"bar.example.invalid."))},
+                records={CNAME(canonical_name=Name("bar.example.invalid."))},
             )
 
             client = get_client(self)
-            d = client.create_hosted_zone(u"{}".format(time()), zone_name)
+            d = client.create_hosted_zone("{}".format(time()), zone_name)
             def created_zone(zone):
                 self.addCleanup(lambda: self._cleanup(client, zone.identifier))
                 d = client.change_resource_record_sets(zone.identifier, [delete_rrset(rrset)])
@@ -171,37 +171,37 @@ def route53_integration_tests(get_client):
 
         @inlineCallbacks
         def test_resource_record_sets(self):
-            zone_name = u"{}.example.invalid.".format(uuid4())
-            cname = CNAME(canonical_name=Name(u"example.invalid."))
+            zone_name = "{}.example.invalid.".format(uuid4())
+            cname = CNAME(canonical_name=Name("example.invalid."))
             client = get_client(self)
 
-            zone = yield client.create_hosted_zone(u"{}".format(time()), zone_name)
+            zone = yield client.create_hosted_zone("{}".format(time()), zone_name)
 
             # At least try to clean up, to be as nice as possible.
             # This might fail and someone else might have to do the
             # cleanup - but it might not!
             self.addCleanup(lambda: self._cleanup(client, zone.identifier))
 
-            cname_label = Name(u"foo.\N{SNOWMAN}.{}".format(zone_name))
+            cname_label = Name("foo.\N{SNOWMAN}.{}".format(zone_name))
             create = create_rrset(RRSet(
                 label=cname_label,
-                type=u"CNAME",
+                type="CNAME",
                 ttl=60,
                 records={cname},
             ))
             yield client.change_resource_record_sets(zone.identifier, [create])
             initial = yield client.list_resource_record_sets(zone.identifier)
 
-            key = RRSetKey(cname_label, u"CNAME")
+            key = RRSetKey(cname_label, "CNAME")
             self.assertIn(key, initial)
             cname_rrset = initial[key]
             self.assertEqual(
-                RRSet(label=cname_label, type=u"CNAME", ttl=60, records={cname}),
+                RRSet(label=cname_label, type="CNAME", ttl=60, records={cname}),
                 cname_rrset,
             )
 
             # Zones start with an SOA and some NS records.
-            key = RRSetKey(Name(zone_name), u"SOA")
+            key = RRSetKey(Name(zone_name), "SOA")
             self.assertIn(key, initial)
             soa = initial[key]
             self.assertEqual(
@@ -209,7 +209,7 @@ def route53_integration_tests(get_client):
                 "Expected one SOA record, got {}".format(soa.records)
             )
 
-            key = RRSetKey(Name(zone_name), u"NS")
+            key = RRSetKey(Name(zone_name), "NS")
             self.assertIn(key, initial)
             ns = initial[key]
             self.assertNotEqual(
@@ -219,20 +219,20 @@ def route53_integration_tests(get_client):
 
             # Unrecognized change type
             # XXX This depends on _ChangeRRSet using attrs.
-            bogus = attr.assoc(create, action=u"BOGUS")
+            bogus = attr.assoc(create, action="BOGUS")
             d = client.change_resource_record_sets(zone.identifier, [bogus])
             error = yield self.assertFailure(d, Route53Error)
             self.assertEqual(BAD_REQUEST, int(error.status))
 
-            created_a = A(IPv4Address(u"10.0.0.1"))
-            upsert_label = Name(u"upsert.{}".format(zone_name))
+            created_a = A(IPv4Address("10.0.0.1"))
+            upsert_label = Name("upsert.{}".format(zone_name))
             upsert_create = upsert_rrset(RRSet(
                 upsert_label,
-                u"A",
+                "A",
                 60,
                 {created_a},
             ))
-            updated_a = A(IPv4Address(u"10.0.0.2"))
+            updated_a = A(IPv4Address("10.0.0.2"))
             upsert_update = upsert_rrset(RRSet(
                 upsert_create.rrset.label,
                 upsert_create.rrset.type,
@@ -241,21 +241,21 @@ def route53_integration_tests(get_client):
             ))
             yield client.change_resource_record_sets(zone.identifier, [upsert_create])
             rrsets = yield client.list_resource_record_sets(zone.identifier)
-            self.assertEqual(rrsets[RRSetKey(upsert_label, u"A")].records, {created_a})
+            self.assertEqual(rrsets[RRSetKey(upsert_label, "A")].records, {created_a})
 
             yield client.change_resource_record_sets(zone.identifier, [upsert_update])
             rrsets = yield client.list_resource_record_sets(zone.identifier)
-            self.assertEqual(rrsets[RRSetKey(upsert_label, u"A")].records, {updated_a})
+            self.assertEqual(rrsets[RRSetKey(upsert_label, "A")].records, {updated_a})
 
             # Use the name and maxitems parameters to select exactly one resource record.
             rrsets = yield client.list_resource_record_sets(
-                zone.identifier, maxitems=1, name=upsert_label, type=u"A",
+                zone.identifier, maxitems=1, name=upsert_label, type="A",
             )
             self.assertEqual(1, len(rrsets), "Expected 1 rrset")
-            self.assertEqual({updated_a}, rrsets[RRSetKey(upsert_label, u"A")].records)
+            self.assertEqual({updated_a}, rrsets[RRSetKey(upsert_label, "A")].records)
 
             # It's invalid to specify type without name.
-            d = client.list_resource_record_sets(zone.identifier, type=u"A")
+            d = client.list_resource_record_sets(zone.identifier, type="A")
             error = yield self.assertFailure(d, Route53Error)
             self.assertEqual(BAD_REQUEST, int(error.status))
 
@@ -293,26 +293,26 @@ def route53_integration_tests(get_client):
             sort first according to the rules given by
             U{http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html#API_ListResourceRecordSets_RequestSyntax}.
             """
-            zone_name = u"{}.example.invalid.".format(uuid4())
+            zone_name = "{}.example.invalid.".format(uuid4())
             client = get_client(self)
 
             # extra sorts _after_ expected according to the AWS Route53
             # ordering rules but it sorts _before_ according to more naive
             # (incorrect) string ordering rules.
             extra = RRSet(
-                Name(u"a.z.{}".format(zone_name)),
-                u"A",
+                Name("a.z.{}".format(zone_name)),
+                "A",
                 60,
-                {A(IPv4Address(u"10.0.0.1"))},
+                {A(IPv4Address("10.0.0.1"))},
             )
             expected = RRSet(
-                Name(u"b.y.{}".format(zone_name)),
-                u"A",
+                Name("b.y.{}".format(zone_name)),
+                "A",
                 60,
-                {A(IPv4Address(u"10.0.0.2"))},
+                {A(IPv4Address("10.0.0.2"))},
             )
 
-            d = client.create_hosted_zone(u"{}".format(time()), zone_name)
+            d = client.create_hosted_zone("{}".format(time()), zone_name)
             def created_zone(zone):
                 self.addCleanup(lambda: self._cleanup(client, zone.identifier))
                 d = client.change_resource_record_sets(zone.identifier, [
@@ -325,8 +325,8 @@ def route53_integration_tests(get_client):
             def created_rrsets(zone):
                 return client.list_resource_record_sets(
                     zone.identifier,
-                    name=Name(u"a.{}".format(zone_name)),
-                    type=u"A",
+                    name=Name("a.{}".format(zone_name)),
+                    type="A",
                     maxitems=1,
                 )
             d.addCallback(created_rrsets)

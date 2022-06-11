@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2012 Canonical Ltd.
+# Copyright (C) 2010-2022 Canonical Ltd.
 # Licenced under the txaws licence available at /LICENSE in the txaws source.
 
 """Parse WSDL definitions and generate schemas.
@@ -403,8 +403,11 @@ class SequenceItem(object):
         """
         tag = self._schema.tag
         children = self._root.getchildren()
-        if len(children) >= self._schema.max_occurs:
+
+        if (self._schema.max_occurs != "unbounded" and
+            len(children) >= self._schema.max_occurs):
             raise WSDLParseError("Too many items in tag '%s'" % tag)
+
         schema = self._schema.child
         tag = "item"
         if self._namespace is not None:
@@ -493,7 +496,7 @@ class WSDLParser(object):
             else:
                 raise RuntimeError("Top-level element with unexpected tag")
 
-        for name, element in responses.iteritems():
+        for name, element in list(responses.items()):
             schemas[name] = self._parse_type(element, types)
             schemas[name].namespace = namespace
 

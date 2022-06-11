@@ -57,8 +57,8 @@ class Route53ClientState(object):
     """
     soa_records = {
         SOA(
-            mname=Name(text=u'ns-698.awsdns-23.net.example.invalid.'),
-            rname=Name(text=u'awsdns-hostmaster.amazon.com.example.invalid.'),
+            mname=Name(text='ns-698.awsdns-23.net.example.invalid.'),
+            rname=Name(text='awsdns-hostmaster.amazon.com.example.invalid.'),
             serial=1,
             refresh=7200,
             retry=900,
@@ -68,8 +68,8 @@ class Route53ClientState(object):
     }
 
     ns_records = {
-        NS(nameserver=Name(text=u'ns-698.awsdns-23.net.example.invalid.')),
-        NS(nameserver=Name(text=u'ns-1188.awsdns-20.org.examplie.invalid.')),
+        NS(nameserver=Name(text='ns-698.awsdns-23.net.example.invalid.')),
+        NS(nameserver=Name(text='ns-1188.awsdns-20.org.examplie.invalid.')),
     }
 
     _id = attr.ib(default=attr.Factory(count), init=False)
@@ -82,7 +82,7 @@ class Route53ClientState(object):
 
         @rtype: L{unicode}
         """
-        return u"/hostedzone/{:014d}".format(next(self._id))
+        return "/hostedzone/{:014d}".format(next(self._id))
 
 
     def get_rrsets(self, zone_id):
@@ -164,7 +164,7 @@ class _MemoryRoute53Client(MemoryClient):
                 create_rrset(
                     RRSet(
                         label=Name(name),
-                        type=u"SOA",
+                        type="SOA",
                         ttl=900,
                         records=self._state.soa_records,
                     ),
@@ -172,7 +172,7 @@ class _MemoryRoute53Client(MemoryClient):
                 create_rrset(
                     RRSet(
                         label=Name(name),
-                        type=u"NS",
+                        type="NS",
                         ttl=172800,
                         records=self._state.ns_records,
                     ),
@@ -246,7 +246,9 @@ class _MemoryRoute53Client(MemoryClient):
             type_limit = lambda t, v=type: t >= v
 
         results = {}
-        for key, rrset in sorted(rrsets.items(), key=_reverse_dns_labels):
+        for key, rrset in sorted(
+                rrsets.items(),
+                key=lambda x: _reverse_dns_labels(x[0].label)):
             if name_limit(key.label) and type_limit(key.type):
                 results[key] = rrset
                 if maxitems_limit(len(results)):
@@ -259,9 +261,9 @@ def _reverse_dns_labels(name):
     Helper to sort L{Name} instances according to the AWS Route53 rules.
 
     @type name: L{Name}
-    @rtype: L{unicode}
+    @rtype: L{str}
     """
-    return u"".join(unicode(name).split(u".")[-2::-1]) + u"."
+    return "".join(str(name).split(".")[-2::-1]) + "."
 
 
 def _process_change(rrsets, change):
@@ -307,7 +309,7 @@ def _process_delete(existing, change):
     """
     Process a I{DELETE} change.
     """
-    if change.type in (u"SOA", u"NS"):
+    if change.type in ("SOA", "NS"):
         # The hosted zone itself must always have an SOA and an NS.  It is an
         # error to attempt to delete either of those.
         #
@@ -333,7 +335,7 @@ def _process_upsert(existing, change):
 
 
 _change_processors = {
-    U"create": _process_create,
-    u"delete": _process_delete,
-    u"upsert": _process_upsert,
+    "create": _process_create,
+    "delete": _process_delete,
+    "upsert": _process_upsert,
 }

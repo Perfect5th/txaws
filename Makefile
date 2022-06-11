@@ -7,7 +7,7 @@ endif
 
 
 version:
-	@python -c "from txaws import version;print version.txaws;"
+	@python -c "from txaws import version;print(version.txaws);"
 
 
 clean:
@@ -28,7 +28,7 @@ check-testcase-names:
 	@find ./txaws|xargs grep Test|grep class|grep -v 'TestCase('
 
 
-virtual-dir-setup: VERSION ?= 2.7
+virtual-dir-setup: VERSION ?= 3
 virtual-dir-setup:
 	-@test -d .venv-$(VERSION) || virtualenv -p $(PYBIN)$(VERSION) .venv-$(VERSION)
 	-@test -e .venv-$(VERSION)/bin/twistd || . .venv-$(VERSION)/bin/activate && pip install twisted
@@ -37,21 +37,25 @@ virtual-dir-setup:
 	-. .venv-$(VERSION)/bin/activate && pip install lxml
 	-. .venv-$(VERSION)/bin/activate && pip install PyOpenSSL
 	-. .venv-$(VERSION)/bin/activate && pip install venusian
-	-. .venv-$(VERSION)/bin/activate && pip install 'python-dateutil<2.0'
+	-. .venv-$(VERSION)/bin/activate && pip install python-dateutil
+	-. .venv-$(VERSION)/bin/activate && pip install pyrsistent
 ifeq ($(VERSION), 2.5)
 	-. .venv-$(VERSION)/bin/activate && pip install elementtree
 	-. .venv-$(VERSION)/bin/activate && pip install simplejson
 endif
+
+virtual-dir-rebuild: VERSION ?= 3
+virtual-dir-rebuild: virtual-dir-remove virtual-dir-setup
+.PHONY: virtual-dir-rebuild
 
 virtual-builds:
 	-@test -e "`which $(PYBIN)2.5`" && VERSION=2.5 make virtual-dir-setup || echo "Couldn't find $(PYBIN)2.5"
 	-@test -e "`which $(PYBIN)2.6`" && VERSION=2.6 make virtual-dir-setup || echo "Couldn't find $(PYBIN)2.6"
 	-@test -e "`which $(PYBIN)2.7`" && VERSION=2.7 make virtual-dir-setup || echo "Couldn't find $(PYBIN)2.7"
 
-
-virtual-trial: VERSION ?= 2.7
+virtual-trial: VERSION ?= 3
 virtual-trial:
-	-. .venv-$(VERSION)/bin/activate && trial ./txaws
+	-. .venv-$(VERSION)/bin/activate && python -m twisted.trial txaws
 
 
 virtual-pep8: VERSION ?= 2.7

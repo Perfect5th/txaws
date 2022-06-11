@@ -1,5 +1,5 @@
 # Copyright (C) 2009 Robert Collins <robertc@robertcollins.net>
-# Copyright (C) 2009 Canonical Ltd
+# Copyright (C) 2022 Canonical Ltd
 # Copyright (C) 2009 Duncan McGreggor <oubiwann@adytum.us>
 # Licenced under the txaws licence available at /LICENSE in the txaws source.
 
@@ -88,9 +88,9 @@ class ConsoleOutput(object):
     @ivar output: The text from the console.
     @type output: L{unicode}
     """
-    instance_id = attr.ib(validator=instance_of(unicode))
+    instance_id = attr.ib(validator=instance_of(str))
     timestamp = attr.ib(validator=instance_of(datetime))
-    output = attr.ib(validator=instance_of(unicode))
+    output = attr.ib(validator=instance_of(str))
 
 
 class SecurityGroup(object):

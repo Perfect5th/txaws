@@ -1,8 +1,8 @@
 # Licenced under the txaws licence available at /LICENSE in the txaws source.
 
 import os
-import urlparse
-from urllib import quote
+import urllib.parse
+from urllib.parse import quote
 from datetime import datetime
 from io import BytesIO
 
@@ -12,7 +12,7 @@ except ImportError:
     from xml.parsers.expat import ExpatError as ParseError
 
 import warnings
-from StringIO import StringIO
+from io import StringIO
 
 import attr
 from attr import validators
@@ -179,16 +179,16 @@ class _QueryArgument(object):
     """
     Representation of a single URL query argument, eg I{foo=bar}.
     """
-    name = attr.ib(validator=validators.instance_of(unicode))
-    value = attr.ib(default=None, validator=validators.optional(validators.instance_of(unicode)))
+    name = attr.ib(validator=validators.instance_of(str))
+    value = attr.ib(default=None, validator=validators.optional(validators.instance_of(str)))
 
     def url_encode(self):
         def q(t):
-            return quote(t.encode("utf-8"), safe=b"")
+            return quote(t, safe="")
 
         if self.value is None:
-            return q(self.name)
-        return q(self.name) + b"=" + q(self.value)
+            return q(self.name).encode()
+        return q(self.name).encode() + b"=" + q(self.value).encode()
 
 
 def _tuples_to_queryarg(tuples):
@@ -242,13 +242,13 @@ class _URLContext(object):
     L{url_context} is the public constructor to hide the type and
     prevent subclassing.
     """
-    scheme = attr.ib(validator=validators.instance_of(unicode))
-    host = attr.ib(validator=validators.instance_of(unicode))
+    scheme = attr.ib(validator=validators.instance_of(str))
+    host = attr.ib(validator=validators.instance_of(str))
     port = attr.ib(validator=validators.optional(validators.instance_of(int)))
-    path = attr.ib(validator=_list_of(validators.instance_of(unicode)))
+    path = attr.ib(validator=_list_of(validators.instance_of(str)))
     query = attr.ib(
         default=attr.Factory(list),
-        convert=_tuples_to_queryarg,
+        converter=_tuples_to_queryarg,
         validator=_list_of(validators.instance_of(_QueryArgument)),
     )
 
@@ -266,7 +266,7 @@ class _URLContext(object):
         @rtype: L{bytes}
         """
         return b"/" + b"/".join(
-            quote(segment.encode("utf-8"), safe=b"") for segment in self.path
+            quote(segment, safe="").encode() for segment in self.path
         )
 
 
@@ -283,18 +283,18 @@ class _URLContext(object):
         @return: The complete, encoded URL.
         @rtype: L{bytes}
         """
-        params = dict(
-            scheme=self.scheme.encode("ascii"),
-            host=self.get_encoded_host(),
-            path=self.get_encoded_path(),
-            query=b"",
-        )
+        params = {
+            b"scheme": self.scheme.encode("ascii"),
+            b"host": self.get_encoded_host(),
+            b"path": self.get_encoded_path(),
+            b"query": b"",
+        }
         query = self.get_encoded_query()
         if query:
             params[b"query"] = b"?" + query
         if self.port is None:
             return b"%(scheme)s://%(host)s%(path)s%(query)s" % params
-        params["port"] = self.port
+        params[b"port"] = self.port
         return b"%(scheme)s://%(host)s:%(port)d%(path)s%(query)s" % params
 
 
@@ -371,17 +371,17 @@ class RequestDetails(object):
     )
     metadata = attr.ib(
         default=pmap(),
-        convert=freeze,
+        converter=freeze,
         validator=validators.instance_of(PMap),
     )
     amz_headers = attr.ib(
         default=pmap(),
-        convert=freeze,
+        converter=freeze,
         validator=validators.instance_of(PMap),
     )
     content_sha256 = attr.ib(
         default=None,
-        validator=validators.optional(validators.instance_of(unicode)),
+        validator=validators.optional(validators.instance_of(str)),
     )
 
 
@@ -480,9 +480,9 @@ class _Query(object):
         headers = {
             "x-amz-date": _auth_v4.makeAMZDate(instant),
         }
-        for key, value in metadata.iteritems():
+        for key, value in metadata.items():
             headers["x-amz-meta-" + key] = value
-        for key, value in amz_headers.iteritems():
+        for key, value in amz_headers.items():
             headers["x-amz-" + key] = value
         if content_sha256 is None:
             content_sha256 = b"UNSIGNED-PAYLOAD"
@@ -490,7 +490,7 @@ class _Query(object):
 
         # Before we check if the content type is set, let's see if we can set
         # it by guessing the the mimetype.
-        content_types = app_headers.getRawHeaders(u"content-type", None)
+        content_types = app_headers.getRawHeaders("content-type", None)
         if content_types is not None:
             headers["content-type"] = content_types[0]
         return headers
@@ -534,26 +534,26 @@ class _Query(object):
             self._details.metadata, self._details.amz_headers,
             self._details.content_sha256,
         )
-        for k, v in extra_headers.iteritems():
+        for k, v in extra_headers.items():
             headers.setRawHeaders(k, [v])
 
-        if not headers.hasHeader(u"host"):
+        if not headers.hasHeader("host"):
             # XXX I'm not sure this is the right encoding for the
             # value in this context.  Headers.setRawHeaders would do
             # something different if we just gave it the unicode.
-            headers.setRawHeaders(u"host", [url_context.get_encoded_host()])
+            headers.setRawHeaders("host", [url_context.get_encoded_host()])
 
         if self._credentials is not None:
             self._log.info(
-                u"Computing authorization from "
-                u"{service} {region} {method} {url} {headers}",
+                "Computing authorization from "
+                "{service} {region} {method} {url} {headers}",
                 service=self._details.service,
                 region=self._details.region,
                 method=method,
                 url=url_context.get_encoded_url(),
                 headers=headers,
             )
-            headers.setRawHeaders(u"authorization", [self._sign(
+            headers.setRawHeaders("authorization", [self._sign(
                 instant,
                 self._credentials,
                 self._details.service,
@@ -563,7 +563,7 @@ class _Query(object):
 
         url = url_context.get_encoded_url()
         self._log.info(
-            u"Submitting query: {method} {url} {headers}",
+            "Submitting query: {method} {url} {headers}",
             method=method,
             url=url,
             headers=headers,
@@ -602,7 +602,7 @@ def _get_agent(scheme, host, reactor, contextFactory=None):
     if scheme == b"https":
         proxy_endpoint = os.environ.get("https_proxy")
         if proxy_endpoint:
-            proxy_url = urlparse.urlparse(proxy_endpoint)
+            proxy_url = urllib.parse.urlparse(proxy_endpoint)
             endpoint = TCP4ClientEndpoint(reactor, proxy_url.hostname, proxy_url.port)
             return ProxyAgent(endpoint)
         else:
@@ -612,7 +612,7 @@ def _get_agent(scheme, host, reactor, contextFactory=None):
     else:
         proxy_endpoint = os.environ.get("http_proxy")
         if proxy_endpoint:
-            proxy_url = urlparse.urlparse(proxy_endpoint)
+            proxy_url = urllib.parse.urlparse(proxy_endpoint)
             endpoint = TCP4ClientEndpoint(reactor, proxy_url.hostname, proxy_url.port)
             return ProxyAgent(endpoint)
         else:
@@ -693,7 +693,7 @@ class BaseQuery(object):
         """
         Convert dictionary of headers into twisted.web.client.Headers object.
         """
-        return Headers(dict((k,[v]) for (k,v) in headers_dict.items()))
+        return Headers(dict((k,[v]) for (k,v) in list(headers_dict.items())))
 
     def _unpack_headers(self, headers):
         """

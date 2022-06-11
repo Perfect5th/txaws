@@ -54,16 +54,16 @@ class _AWSRequest(object):
     An AWS request fixture.
 
     @ivar method: The request's method.
-    @type method: L{bytes}
+    @type method: L{str}
 
     @ivar path: The request's path.
-    @type path: L{bytes}
+    @type path: L{str}
 
     @ivar headers: The request's headers.
     @type headers: L{dict}
 
     @ivar body: The request's body.
-    @type body: L{bytes}
+    @type body: L{str}
     """
     method = attr.ib()
     path = attr.ib()
@@ -94,9 +94,12 @@ class _AWSRequest(object):
         channel.connectionLost(ConnectionDone())
         request = channel.requests[-1]
 
-        method = request.method
-        path = request.uri
-        headers = dict(request.requestHeaders.getAllRawHeaders())
+        method = request.method.decode()
+        path = request.uri.decode()
+        headers = {k.decode(): [v.decode() for v in vs]
+                   for k, vs in
+                   request.requestHeaders.getAllRawHeaders()}
+
         # what comes after the empty line is a
         body = byte_string.split(blank_line, 1)[-1]
 
@@ -167,7 +170,7 @@ class _AWS4TestSuiteTestCaseMixin(object):
             method=request.method,
             url=request.path,
             headers=request.headers,
-            headers_to_sign=request.headers.keys(),
+            headers_to_sign=list(request.headers.keys()),
             payload=request.body,
         )
 

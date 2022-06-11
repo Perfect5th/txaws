@@ -1,7 +1,9 @@
-# Copyright (C) 2010-2012 Canonical Ltd.
+# Copyright (C) 2010-2022 Canonical Ltd.
 # Licenced under the txaws licence available at /LICENSE in the txaws source.
 
 import os
+
+from twisted.python.modules import getModule
 from twisted.trial.unittest import TestCase
 
 from txaws.wsdl import (
@@ -514,7 +516,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
         parser = WSDLParser()
         wsdl_dir = os.path.join(os.path.dirname(__file__), "../wsdl")
         wsdl_path = os.path.join(wsdl_dir, "2009-11-30.ec2.wsdl")
-        self.schemas = parser.parse(open(wsdl_path).read())
+        self.schemas = parser.parse(open(wsdl_path, "rb").read())
 
     def test_parse_create_key_pair_response(self):
         """Parse a CreateKeyPairResponse payload."""

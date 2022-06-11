@@ -3,7 +3,7 @@
 
 """Credentials for accessing AWS services."""
 
-import ConfigParser
+import configparser
 import os
 
 import attr
@@ -62,9 +62,9 @@ class AWSCredentials(object):
     def sign(self, bytes, hash_type="sha256"):
         """Sign some bytes."""
         if hash_type == "sha256":
-            return hmac_sha256(self.secret_key, bytes)
+            return hmac_sha256(self.secret_key.encode(), bytes)
         elif hash_type == "sha1":
-            return hmac_sha1(self.secret_key, bytes)
+            return hmac_sha1(self.secret_key.encode(), bytes)
         else:
             raise RuntimeError("Unsupported hash type: '%s'" % hash_type)
 
@@ -77,7 +77,7 @@ def _load_shared_credentials(environ, profile=None):
         ENV_SHARED_CREDENTIALS_FILE,
         os.path.expanduser("~/.aws/credentials"),
     )
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
     if not config.read([credentials_path]):
         raise _CompatCredentialsNotFoundError(
             "Could not find credentials in the environment or filesystem",
@@ -91,7 +91,7 @@ def _load_shared_credentials(environ, profile=None):
             config.get(profile, "aws_access_key_id"),
             config.get(profile, "aws_secret_access_key"),
         )
-    except ConfigParser.NoOptionError as error:
+    except configparser.NoOptionError as error:
         raise CredentialsNotFoundError(
             "Profile {0.section!r} has no {0.option!r}".format(error),
         )

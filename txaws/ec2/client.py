@@ -1,13 +1,13 @@
 # Copyright (C) 2009 Robert Collins <robertc@robertcollins.net>
-# Copyright (C) 2009 Canonical Ltd
+# Copyright (C) 2022 Canonical Ltd
 # Copyright (C) 2009 Duncan McGreggor <oubiwann@adytum.us>
 # Licenced under the txaws licence available at /LICENSE in the txaws source.
 
 """EC2 client support."""
 
-from datetime import datetime
-from urllib import quote
 from base64 import b64encode
+from datetime import datetime
+from urllib.parse import quote
 
 from dateutil.parser import parse as parse_timestamp
 
@@ -1083,10 +1083,10 @@ class Signature(object):
         else:
             version = self.params["SignatureVersion"]
         if str(version) == "1":
-            bytes = self.old_signing_text()
+            bytes = self.old_signing_text().encode()
             hash_type = "sha1"
         elif str(version) == "2":
-            bytes = self.signing_text()
+            bytes = self.signing_text().encode()
             if self.signature_method is not None:
                 signature_method = self.signature_method
             else:
@@ -1094,13 +1094,13 @@ class Signature(object):
             hash_type = signature_method[len("Hmac"):].lower()
         else:
             raise RuntimeError("Unsupported SignatureVersion: '%s'" % version)
-        return self.creds.sign(bytes, hash_type)
+        return self.creds.sign(bytes, hash_type).decode()
 
     def old_signing_text(self):
         """Return the text needed for signing using SignatureVersion 1."""
         result = []
-        lower_cmp = lambda x, y: cmp(x[0].lower(), y[0].lower())
-        for key, value in sorted(self.params.items(), cmp=lower_cmp):
+        for key, value in sorted(list(self.params.items()),
+                                 key=lambda x: x[0].lower()):
             result.append("%s%s" % (key, value))
         return "".join(result)
 
@@ -1125,7 +1125,7 @@ class Signature(object):
         See the AWS dev reference page 186 (2009-11-30 version).
         @return: a_string encoded.
         """
-        if isinstance(string, unicode):
+        if isinstance(string, str):
             string = string.encode("utf-8")
         return quote(string, safe="~")
 

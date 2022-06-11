@@ -1,10 +1,10 @@
-from zope.interface import implements
+from zope.interface import implementer
 
 from twisted.internet.defer import succeed
 from twisted.web.iweb import IBodyProducer
 
+@implementer(IBodyProducer)
 class StringBodyProducer(object):
-    implements(IBodyProducer)
 
     def __init__(self, data):
         self.data = data

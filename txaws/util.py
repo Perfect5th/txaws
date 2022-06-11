@@ -7,15 +7,10 @@ services.
 from base64 import b64encode
 from hashlib import sha1, md5, sha256
 import hmac
-from urlparse import urlparse, urlunparse
+from urllib.parse import urlparse, urlunparse
 import time
 
-# Import XMLTreeBuilder from somewhere; here in one place to prevent
-# duplication.
-try:
-    from xml.etree.ElementTree import XMLTreeBuilder
-except ImportError:
-    from elementtree.ElementTree import XMLTreeBuilder
+from xml.etree.ElementTree import TreeBuilder as XMLTreeBuilder, XMLParser
 
 
 __all__ = ["hmac_sha1", "hmac_sha256", "iso8601time", "calculate_md5", "XML"]
@@ -49,6 +44,11 @@ def iso8601time(time_tuple):
 
 class NamespaceFixXmlTreeBuilder(XMLTreeBuilder):
 
+    def start(self, tag, attrs):
+        super(NamespaceFixXmlTreeBuilder, self).start(
+            self._fixname(tag),
+            attrs)
+
     def _fixname(self, key):
         if "}" in key:
             key = key.split("}", 1)[1]
@@ -56,7 +56,7 @@ class NamespaceFixXmlTreeBuilder(XMLTreeBuilder):
 
 
 def XML(text):
-    parser = NamespaceFixXmlTreeBuilder()
+    parser = XMLParser(target=NamespaceFixXmlTreeBuilder())
     parser.feed(text)
     return parser.close()
 

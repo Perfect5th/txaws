@@ -1,4 +1,4 @@
-from cStringIO import StringIO
+from io import StringIO
 from datetime import datetime
 
 from dateutil.tz import tzutc
@@ -36,7 +36,7 @@ class FakeRequest(object):
 
     @property
     def args(self):
-        return dict((key, [value]) for key, value in self.params.iteritems())
+        return dict((key, [value]) for key, value in self.params.items())
 
     @property
     def method(self):
@@ -121,7 +121,7 @@ class AlternativeWireFormatQueryAPI(TestQueryAPI):
             "signature_method": "Hmacsha256",
             "signature_version": 2,
             "signature": request.args["signature"][0]}
-        params = dict((k, v[-1]) for k, v in request.args.iteritems())
+        params = dict((k, v[-1]) for k, v in request.args.items())
         raw = params.copy()
         raw.pop("signature")
         return {"transport_args": result,
@@ -282,7 +282,7 @@ class QueryAPITestCase(TestCase):
         creds = AWSCredentials("access", "secret")
         endpoint = AWSServiceEndpoint("http://uri")
         query = Query(action="SomeAction", creds=creds, endpoint=endpoint,
-                      other_params={"Version": u"1.2.3"})
+                      other_params={"Version": "1.2.3"})
         query.sign()
         request = FakeRequest(query.params, endpoint)
 
@@ -350,7 +350,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual("InvalidSignature - SignatureVersion '2' "
                              "not supported", request.response)
             self.assertEqual(403, request.code)
@@ -373,7 +373,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(1, len(errors))
+            self.assertEqual(1, len(errors))
             self.assertTrue(request.finished)
             self.assertEqual("Server error", request.response)
             self.assertEqual(500, request.code)
@@ -398,7 +398,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(1, len(errors))
+            self.assertEqual(1, len(errors))
             self.assertTrue(request.finished)
             self.assertEqual("oops", request.response)
             self.assertEqual(500, request.code)
@@ -420,7 +420,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual("MissingParameter - The request must contain "
                              "the parameter Action (unicode)",
                              request.response)
@@ -443,7 +443,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual(400, request.code)
             self.assertEqual(
                 self.api.content_type, request.headers['Content-Type'])
@@ -465,12 +465,12 @@ class QueryAPITestCase(TestCase):
 
         def fail_execute(call):
             raise APIError(400, code="LangError",
-                           message=u"\N{HIRAGANA LETTER A}dvanced")
+                           message="\N{HIRAGANA LETTER A}dvanced")
         self.api.execute = fail_execute
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertTrue(request.finished)
             self.assertTrue(request.response.startswith("LangError"))
             self.assertEqual(400, request.code)
@@ -490,7 +490,7 @@ class QueryAPITestCase(TestCase):
         request = FakeRequest(query.params, endpoint)
 
         def fail_execute(call):
-            raise ValueError(u"\N{HIRAGANA LETTER A}dvanced")
+            raise ValueError("\N{HIRAGANA LETTER A}dvanced")
         self.api.execute = fail_execute
 
         def check(ignored):
@@ -513,7 +513,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual("InvalidAction - The action FooBar is not valid"
                              " for this web service.", request.response)
             self.assertEqual(400, request.code)
@@ -537,7 +537,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual("InvalidAction - The action CantDoIt is not "
                              "valid for this web service.", request.response)
             self.assertEqual(400, request.code)
@@ -559,7 +559,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual("InvalidAction - The action FooBar is not valid"
                              " for this web service.", request.response)
             self.assertEqual(400, request.code)
@@ -579,7 +579,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual("AuthFailure - No user with access key 'access'",
                              request.response)
             self.assertEqual(401, request.code)
@@ -600,7 +600,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual("SignatureDoesNotMatch - The request signature "
                              "we calculated does not match the signature you "
                              "provided. Check your key and signing method.",
@@ -625,7 +625,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual(
                 "InvalidParameterCombination - The parameter Timestamp"
                 " cannot be used with the parameter Expires",
@@ -669,7 +669,7 @@ class QueryAPITestCase(TestCase):
 
         def check(ignored):
             errors = self.flushLoggedErrors()
-            self.assertEquals(0, len(errors))
+            self.assertEqual(0, len(errors))
             self.assertEqual(
                 "RequestExpired - Request has expired. Expires date is"
                 " 2010-01-01T12:00:00Z", request.response)

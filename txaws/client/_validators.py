@@ -39,7 +39,7 @@ class _ContainerOf(object):
     def __call__(self, inst, a, value):
         validators.instance_of(self.container_type)(inst, a, value)
         for n, element in enumerate(sorted(value)):
-            inner_identifier = u"sorted({})[{}]".format(a.name, n)
+            inner_identifier = "sorted({})[{}]".format(a.name, n)
             # Create an Attribute with a name that refers to the
             # validator we're using and the index we're validating.
             # Otherwise the validation failure is pretty confusing.
@@ -51,5 +51,6 @@ class _ContainerOf(object):
                 cmp=False,
                 hash=False,
                 init=False,
+                inherited=False,
             )
             self.validator(inst, inner_attr, element)

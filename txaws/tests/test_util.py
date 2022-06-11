@@ -1,4 +1,5 @@
-from urlparse import urlparse
+import binascii
+from urllib.parse import urlparse
 
 from twisted.trial.unittest import TestCase
 
@@ -9,12 +10,12 @@ class MiscellaneousTestCase(TestCase):
 
     def test_hmac_sha1(self):
         cases = [
-            ("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b".decode("hex"),
-             "Hi There", "thcxhlUFcmTii8C2+zeMjvFGvgA="),
-            ("Jefe", "what do ya want for nothing?",
+            (binascii.unhexlify("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
+             b"Hi There", "thcxhlUFcmTii8C2+zeMjvFGvgA="),
+            (b"Jefe", b"what do ya want for nothing?",
              "7/zfauXrL6LSdBbV8YTfnCWafHk="),
-            ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa".decode("hex"),
-             "\xdd" * 50, "El1zQrmsEc2Ro5r0iqF7T2PxddM="),
+            (binascii.unhexlify("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
+             b"\xdd" * 50, "El1zQrmsEc2Ro5r0iqF7T2PxddM="),
             ]
 
         for key, data, expected in cases:
@@ -57,17 +58,3 @@ class ParseUrlTestCase(TestCase):
         self.assertEqual(
             parse("http://foo "),
             ("http", "foo", 80, "/"))
-
-    def test_externalUnicodeInterference(self):
-        """
-        L{parse} should return C{str} for the scheme, host, and path
-        elements of its return tuple, even when passed an URL which has
-        previously been passed to L{urlparse} as a C{unicode} string.
-        """
-        badInput = u"http://example1.com/path"
-        goodInput = badInput.encode("ascii")
-        urlparse(badInput)
-        scheme, host, port, path = parse(goodInput)
-        self.assertTrue(isinstance(scheme, str))
-        self.assertTrue(isinstance(host, str))
-        self.assertTrue(isinstance(path, str))

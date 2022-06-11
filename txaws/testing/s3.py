@@ -75,7 +75,7 @@ class _MemoryS3Client(MemoryClient):
         return succeed(list(
             item["bucket"]
             for item
-            in self._state.buckets.itervalues()
+            in self._state.buckets.values()
         ))
 
     @_rate_limited
@@ -83,7 +83,7 @@ class _MemoryS3Client(MemoryClient):
         assert bucket not in self._state.buckets
         self._state.buckets[bucket] = dict(
             bucket=Bucket(bucket, self._state.time()),
-            listing=BucketListing(bucket, None, None, None, u"false"),
+            listing=BucketListing(bucket, None, None, None, "false"),
         )
         return succeed(None)
 
@@ -95,7 +95,7 @@ class _MemoryS3Client(MemoryClient):
         return succeed(None)
 
     @_rate_limited
-    def get_bucket(self, bucket, marker=None, max_keys=None, prefix=None):
+    def get_bucket(self, bucket, marker=None, max_keys=None, prefix=""):
         try:
             pieces = self._state.buckets[bucket]
         except KeyError:
@@ -106,10 +106,10 @@ class _MemoryS3Client(MemoryClient):
             max_keys = 1000
 
         if prefix is None:
-            prefix = b""
+            prefix = ""
 
         if marker is None:
-            keys_after = b""
+            keys_after = ""
         else:
             keys_after = marker
 
@@ -122,9 +122,9 @@ class _MemoryS3Client(MemoryClient):
         )
 
         contents = list(islice(prefixed_contents, max_keys))
-        is_truncated = u"false"
+        is_truncated = "false"
         for ignored in prefixed_contents:
-            is_truncated = u"true"
+            is_truncated = "true"
             break
 
         listing = attr.assoc(
@@ -158,7 +158,7 @@ class _MemoryS3Client(MemoryClient):
             key=object_name,
             modification_date=datetime.fromtimestamp(int(self._state.time()), tz=tzutc()),
             etag='"{}"'.format('a' * 32).encode('ascii'),
-            size=str(len(data or "")),
+            size=str(len(data or "")).encode(),
             storage_class="STANDARD",
         ))
         if data is not None:

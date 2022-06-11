@@ -180,12 +180,21 @@ class Unicode(Parameter):
     greater_than_max_template = "Length exceeds maximum of %s."
 
     def parse(self, value):
-        return value.decode("utf-8")
+        if type(value) == bytes:
+            return value.decode()
+
+        return value
 
     def format(self, value):
-        return value.encode("utf-8")
+        if type(value) == bytes:
+            return value.decode()
+
+        return value
 
     def measure(self, value):
+        if type(value) == bytes:
+            value = value.decode()
+
         return len(value)
 
 
@@ -299,7 +308,7 @@ class Enum(Parameter):
         if mapping is None:
             raise TypeError("Must provide mapping")
         self.mapping = mapping
-        self.reverse = dict((value, key) for key, value in mapping.iteritems())
+        self.reverse = dict((value, key) for key, value in mapping.items())
 
     def parse(self, value):
         try:
@@ -373,7 +382,7 @@ class List(Parameter):
             # We interpret non-list inputs as a list of one element, for
             # compatibility with certain EC2 APIs.
             return [self.item.coerce(value)]
-        for index in value.keys():
+        for index in list(value.keys()):
             try:
                 indices.append(int(index))
             except ValueError:
@@ -431,20 +440,20 @@ class Structure(Parameter):
         """
         result = {}
         rest = {}
-        for k, v in value.iteritems():
+        for k, v in value.items():
             if k in self.fields:
                 if (isinstance(v, dict)
                         and not self.fields[k].supports_multiple):
                     if len(v) == 1:
                         # We support "foo.1" as "foo" as long as there is only
                         # one "foo.#" parameter provided.... -_-
-                        v = v.values()[0]
+                        v = list(v.values())[0]
                     else:
                         raise InvalidParameterCombinationError(k)
                 result[k] = self.fields[k].coerce(v)
             else:
                 rest[k] = v
-        for k, v in self.fields.iteritems():
+        for k, v in self.fields.items():
             if k not in result:
                 result[k] = v.coerce(None)
         if rest:
@@ -456,7 +465,7 @@ class Structure(Parameter):
         Convert a dictionary of processed values to a dictionary of raw values.
         """
         if not isinstance(value, Arguments):
-            value = value.iteritems()
+            value = iter(value.items())
         return dict((k, self.fields[k].format(v)) for k, v in value)
 
 
@@ -469,7 +478,7 @@ class Arguments(object):
         @param tree: The C{dict}-based structure of the L{Argument} instance
             to create.
         """
-        for key, value in tree.iteritems():
+        for key, value in tree.items():
             self.__dict__[key] = self._wrap(value)
 
     def __str__(self):
@@ -479,7 +488,7 @@ class Arguments(object):
 
     def __iter__(self):
         """Returns an iterator yielding C{(name, value)} tuples."""
-        return self.__dict__.iteritems()
+        return iter(self.__dict__.items())
 
     def __getitem__(self, index):
         """Return the argument value with the given L{index}."""
@@ -500,11 +509,11 @@ class Arguments(object):
             arbitrarily deep.
         """
         if isinstance(value, dict):
-            if any(isinstance(name, int) for name in value.keys()):
-                if not all(isinstance(name, int) for name in value.keys()):
+            if any(isinstance(name, int) for name in list(value.keys())):
+                if not all(isinstance(name, int) for name in list(value.keys())):
                     raise RuntimeError("Integer and non-integer keys: %r"
-                                       % value.keys())
-                items = sorted(value.iteritems(), key=itemgetter(0))
+                                       % list(value.keys()))
+                items = sorted(iter(value.items()), key=itemgetter(0))
                 return [self._wrap(val) for _, val in items]
             else:
                 return Arguments(value)
@@ -520,7 +529,7 @@ def _namify_arguments(mapping):
     correct name.
     """
     result = []
-    for name, parameter in mapping.iteritems():
+    for name, parameter in mapping.items():
         parameter.name = name
         result.append(parameter)
     return result
@@ -599,7 +608,7 @@ class Schema(object):
         try:
             tree = structure.coerce(self._convert_flat_to_nest(params))
             rest = {}
-        except UnknownParametersError, error:
+        except UnknownParametersError as error:
             tree = error.result
             rest = self._convert_nest_to_flat(error.unknown)
         return Arguments(tree), rest
@@ -619,7 +628,7 @@ class Schema(object):
 
         params.update(extra)
         result = {}
-        for name, value in params.iteritems():
+        for name, value in params.items():
             if value is None:
                 continue
             segments = name.split('.')
@@ -662,7 +671,7 @@ class Schema(object):
         This is the inverse of L{_convert_nest_to_flat}.
         """
         result = {}
-        for k, v in params.iteritems():
+        for k, v in params.items():
             last = result
             segments = k.split('.')
             for index, item in enumerate(segments):
@@ -692,7 +701,7 @@ class Schema(object):
         """
         if _result is None:
             _result = {}
-        for k, v in params.iteritems():
+        for k, v in params.items():
             if _prefix is None:
                 path = k
             else:

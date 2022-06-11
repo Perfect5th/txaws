@@ -25,12 +25,12 @@ from ..client._validators import set_of
 @attr.s(frozen=True)
 class Name(object):
     text = attr.ib(
-        convert=lambda v: v + u"." if not v.endswith(u".") else v,
-        validator=validators.instance_of(unicode),
+        converter=lambda v: v + "." if not v.endswith(".") else v,
+        validator=validators.instance_of(str),
     )
 
     def __str__(self):
-        return self.text.encode("idna")
+        return self.text
 
 
 @attr.s(frozen=True)
@@ -67,7 +67,7 @@ class RRSet(object):
     type = RRSetType.RESOURCE
 
     label = attr.ib(validator=validators.instance_of(Name))
-    type = attr.ib(validator=validators.instance_of(unicode))
+    type = attr.ib(validator=validators.instance_of(str))
     ttl = attr.ib(validator=validators.instance_of(int))
     records = attr.ib(validator=set_of(validators.provides(IBasicResourceRecord)))
 
@@ -92,10 +92,10 @@ class AliasRRSet(object):
     type = type = RRSetType.ALIAS
 
     label = attr.ib(validator=validators.instance_of(Name))
-    type = attr.ib(validator=validators.instance_of(unicode))
+    type = attr.ib(validator=validators.instance_of(str))
     dns_name = attr.ib(validator=validators.instance_of(Name))
     evaluate_target_health = attr.ib(validator=validators.instance_of(bool))
-    hosted_zone_id = attr.ib(validator=validators.instance_of(unicode))
+    hosted_zone_id = attr.ib(validator=validators.instance_of(str))
 
 
 
@@ -108,15 +108,15 @@ class _ChangeRRSet(object):
 
 
 def create_rrset(rrset):
-    return _ChangeRRSet(u"CREATE", rrset)
+    return _ChangeRRSet("CREATE", rrset)
 
 
 def delete_rrset(rrset):
-    return _ChangeRRSet(u"DELETE", rrset)
+    return _ChangeRRSet("DELETE", rrset)
 
 
 def upsert_rrset(rrset):
-    return _ChangeRRSet(u"UPSERT", rrset)
+    return _ChangeRRSet("UPSERT", rrset)
 
 
 @provider(IResourceRecordLoader)
@@ -131,7 +131,7 @@ class NS(object):
 
 
     def to_text(self):
-        return unicode(self.nameserver)
+        return str(self.nameserver)
 
 
 
@@ -147,7 +147,7 @@ class A(object):
 
 
     def to_text(self):
-        return unicode(self.address)
+        return str(self.address)
 
 
 
@@ -163,7 +163,7 @@ class AAAA(object):
 
 
     def to_text(self):
-        return unicode(self.address)
+        return str(self.address)
 
 
 
@@ -183,7 +183,7 @@ class MX(object):
 
 
     def to_text(self):
-        return u"{} {}".format(self.preference, self.name)
+        return "{} {}".format(self.preference, self.name)
 
 
 
@@ -198,7 +198,7 @@ class CNAME(object):
         return cls(Name(maybe_bytes_to_unicode(e.find("Value").text)))
 
     def to_text(self):
-        return unicode(self.canonical_name)
+        return str(self.canonical_name)
 
 
 
@@ -221,15 +221,15 @@ def _split_quoted(text):
         if escaped:
             escaped = False
             result.append(ch)
-        elif ch == u'\\':
+        elif ch == '\\':
             escaped = True
-        elif ch == u'"':
+        elif ch == '"':
             quoted = not quoted
-        elif not quoted and ch == u' ':
-            return u"".join(result), text[i:].lstrip()
+        elif not quoted and ch == ' ':
+            return "".join(result), text[i:].lstrip()
         else:
             result.append(ch)
-    return u"".join(result), u""
+    return "".join(result), ""
 
 
 
@@ -263,9 +263,9 @@ class NAPTR(object):
     """
     order = attr.ib(validator=validators.instance_of(int))
     preference = attr.ib(validator=validators.instance_of(int))
-    flag = attr.ib(validator=validators.instance_of(unicode))
-    service = attr.ib(validator=validators.instance_of(unicode))
-    regexp = attr.ib(validator=validators.instance_of(unicode))
+    flag = attr.ib(validator=validators.instance_of(str))
+    service = attr.ib(validator=validators.instance_of(str))
+    regexp = attr.ib(validator=validators.instance_of(str))
     replacement = attr.ib(validator=validators.instance_of(Name))
 
     @classmethod
@@ -284,10 +284,10 @@ class NAPTR(object):
 
     def to_text(self):
         replacement = self.replacement
-        if replacement == Name(u"."):
-            replacement = u"."
+        if replacement == Name("."):
+            replacement = "."
 
-        return u"{} {} {} {} {} {}".format(
+        return "{} {} {} {} {} {}".format(
             self.order, self.preference,
             _quote(self.flag),
             _quote(self.service),
@@ -309,7 +309,7 @@ class PTR(object):
 
 
     def to_text(self):
-        return unicode(self.name)
+        return str(self.name)
 
 
 
@@ -317,7 +317,7 @@ class PTR(object):
 @implementer(IBasicResourceRecord)
 @attr.s(frozen=True)
 class SPF(object):
-    value = attr.ib(validator=validators.instance_of(unicode))
+    value = attr.ib(validator=validators.instance_of(str))
 
     @classmethod
     def basic_from_element(cls, e):
@@ -365,7 +365,7 @@ class SRV(object):
 @attr.s(frozen=True)
 class TXT(object):
     texts = attr.ib(
-        convert=tuple,
+        converter=tuple,
         validator=validators.instance_of(tuple),
     )
 
@@ -380,7 +380,7 @@ class TXT(object):
 
 
     def to_text(self):
-        return u" ".join(
+        return " ".join(
             _quote(value)
             for value
             in self.texts
@@ -403,7 +403,7 @@ class SOA(object):
     @classmethod
     def basic_from_element(cls, e):
         text = maybe_bytes_to_unicode(e.find("Value").text)
-        parts = dict(zip(_SOA_FIELDS, text.split()))
+        parts = dict(list(zip(_SOA_FIELDS, text.split())))
         return cls(
             Name(parts["mname"]),
             Name(parts["rname"]),
@@ -415,7 +415,7 @@ class SOA(object):
         )
 
     def to_text(self):
-        return u"{mname} {rname} {serial} {refresh} {retry} {expire} {minimum}".format(
+        return "{mname} {rname} {serial} {refresh} {retry} {expire} {minimum}".format(
             **attr.asdict(self, recurse=False)
         )
 
@@ -426,7 +426,7 @@ _SOA_FIELDS = list(field.name for field in attr.fields(SOA))
 @implementer(IBasicResourceRecord)
 @attr.s(frozen=True)
 class UnknownRecordType(object):
-    value = attr.ib(validator=validators.instance_of(unicode))
+    value = attr.ib(validator=validators.instance_of(str))
 
     @classmethod
     def basic_from_element(cls, e):
@@ -434,7 +434,7 @@ class UnknownRecordType(object):
 
 
     def to_text(self):
-        return unicode(self.value)
+        return str(self.value)
 
 
 
@@ -443,7 +443,7 @@ class HostedZone(object):
     """
     http://docs.aws.amazon.com/Route53/latest/APIReference/API_HostedZone.html
     """
-    name = attr.ib(validator=validators.instance_of(unicode))
-    identifier = attr.ib(validator=validators.instance_of(unicode))
+    name = attr.ib(validator=validators.instance_of(str))
+    identifier = attr.ib(validator=validators.instance_of(str))
     rrset_count = attr.ib(validator=validators.instance_of(int))
-    reference = attr.ib(validator=validators.instance_of(unicode))
+    reference = attr.ib(validator=validators.instance_of(str))
