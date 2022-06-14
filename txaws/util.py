@@ -17,6 +17,8 @@ __all__ = ["hmac_sha1", "hmac_sha256", "iso8601time", "calculate_md5", "XML"]
 
 
 def calculate_md5(data):
+    data = data.encode() if type(data) == str else data
+
     digest = md5(data).digest()
     return b64encode(digest)
 

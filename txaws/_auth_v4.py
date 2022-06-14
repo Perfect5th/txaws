@@ -443,7 +443,7 @@ def _make_authorization_header(region,
         L{datetime.datetime.utcnow})
 
     @return: A value suitable for use in an C{Authorization} header
-    @rtype: L{bytes}
+    @rtype: L{str}
     """
     date_stamp = makeDateStamp(instant)
     amz_date = makeAMZDate(instant)
@@ -473,9 +473,9 @@ def _make_authorization_header(region,
     )
 
     return (
-        b"%s " % (_SignableAWS4HMAC256Token.ALGORITHM,) +
-        b", ".join([
-            b"Credential=%s" % (v4credential.serialize(),),
-            b"SignedHeaders=%s" % (canonical_request.signed_headers.encode(),),
-            b"Signature=%s" % (signature,),
+        "%s " % (_SignableAWS4HMAC256Token.ALGORITHM,) +
+        ", ".join([
+            "Credential=%s" % (v4credential.serialize(),),
+            "SignedHeaders=%s" % (canonical_request.signed_headers,),
+            "Signature=%s" % (signature,),
         ]))

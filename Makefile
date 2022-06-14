@@ -39,6 +39,7 @@ virtual-dir-setup:
 	-. .venv-$(VERSION)/bin/activate && pip install venusian
 	-. .venv-$(VERSION)/bin/activate && pip install python-dateutil
 	-. .venv-$(VERSION)/bin/activate && pip install pyrsistent
+	-. .venv-$(VERSION)/bin/activate && pip install treq
 ifeq ($(VERSION), 2.5)
 	-. .venv-$(VERSION)/bin/activate && pip install elementtree
 	-. .venv-$(VERSION)/bin/activate && pip install simplejson
@@ -55,7 +56,7 @@ virtual-builds:
 
 virtual-trial: VERSION ?= 3
 virtual-trial:
-	-. .venv-$(VERSION)/bin/activate && python -m twisted.trial txaws
+	-. .venv-$(VERSION)/bin/activate && python -m twisted.trial txaws.client.tests.test_ssl.BaseQuerySSLTestCase
 
 
 virtual-pep8: VERSION ?= 2.7

@@ -75,7 +75,7 @@ class EC2Client(BaseClient):
                    "security_group_ids or security_groups")
             raise ValueError(msg)
         if user_data is not None:
-            params["UserData"] = b64encode(user_data)
+            params["UserData"] = b64encode(user_data.encode())
         if instance_type is not None:
             params["InstanceType"] = instance_type
         if availability_zone is not None:
@@ -478,7 +478,7 @@ class EC2Client(BaseClient):
         query = self.query_factory(
             action="ImportKeyPair", creds=self.creds, endpoint=self.endpoint,
             other_params={"KeyName": keypair_name,
-                          "PublicKeyMaterial": b64encode(key_material)})
+                          "PublicKeyMaterial": b64encode(key_material.encode())})
         d = query.submit()
         return d.addCallback(self.parser.import_keypair, key_material)
 

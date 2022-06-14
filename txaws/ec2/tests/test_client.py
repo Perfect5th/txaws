@@ -1,5 +1,5 @@
 # Copyright (C) 2009 Robert Collins <robertc@robertcollins.net>
-# Copyright (C) 2009 Canonical Ltd
+# Copyright (C) 2022 Canonical Ltd
 # Copyright (C) 2009 Duncan McGreggor <oubiwann@adytum.us>
 # Licenced under the txaws licence available at /LICENSE in the txaws source.
 
@@ -34,9 +34,9 @@ class ReservationTestCase(TestCase):
     def test_reservation_creation(self):
         reservation = model.Reservation(
             "id1", "owner", groups=["one", "two"])
-        self.assertEquals(reservation.reservation_id, "id1")
-        self.assertEquals(reservation.owner_id, "owner")
-        self.assertEquals(reservation.groups, ["one", "two"])
+        self.assertEqual(reservation.reservation_id, "id1")
+        self.assertEqual(reservation.owner_id, "owner")
+        self.assertEqual(reservation.groups, ["one", "two"])
 
 
 class InstanceTestCase(TestCase):
@@ -46,21 +46,21 @@ class InstanceTestCase(TestCase):
             "id1", "running", "type", "id2", "dns1", "dns2", "ip1",
             "ip2", "key", "ami", "time", "placement",
             ["prod1", "prod2"], "id3", "id4")
-        self.assertEquals(instance.instance_id, "id1")
-        self.assertEquals(instance.instance_state, "running")
-        self.assertEquals(instance.instance_type, "type")
-        self.assertEquals(instance.image_id, "id2")
-        self.assertEquals(instance.private_dns_name, "dns1")
-        self.assertEquals(instance.dns_name, "dns2")
-        self.assertEquals(instance.private_ip_address, "ip1")
-        self.assertEquals(instance.ip_address, "ip2")
-        self.assertEquals(instance.key_name, "key")
-        self.assertEquals(instance.ami_launch_index, "ami")
-        self.assertEquals(instance.launch_time, "time")
-        self.assertEquals(instance.placement, "placement")
-        self.assertEquals(instance.product_codes, ["prod1", "prod2"])
-        self.assertEquals(instance.kernel_id, "id3")
-        self.assertEquals(instance.ramdisk_id, "id4")
+        self.assertEqual(instance.instance_id, "id1")
+        self.assertEqual(instance.instance_state, "running")
+        self.assertEqual(instance.instance_type, "type")
+        self.assertEqual(instance.image_id, "id2")
+        self.assertEqual(instance.private_dns_name, "dns1")
+        self.assertEqual(instance.dns_name, "dns2")
+        self.assertEqual(instance.private_ip_address, "ip1")
+        self.assertEqual(instance.ip_address, "ip2")
+        self.assertEqual(instance.key_name, "key")
+        self.assertEqual(instance.ami_launch_index, "ami")
+        self.assertEqual(instance.launch_time, "time")
+        self.assertEqual(instance.placement, "placement")
+        self.assertEqual(instance.product_codes, ["prod1", "prod2"])
+        self.assertEqual(instance.kernel_id, "id3")
+        self.assertEqual(instance.ramdisk_id, "id4")
 
 
 class EC2ClientTestCase(TestCase):
@@ -85,13 +85,13 @@ class EC2ClientTestCase(TestCase):
                         client.Query.get_page)
 
         def get_page(query, url, *args, **kwargs):
-            self.assertEquals(args, ())
-            self.assertEquals(
+            self.assertEqual(args, ())
+            self.assertEqual(
                 kwargs["headers"],
                 {"Content-Type": "application/x-www-form-urlencoded"})
             self.assertIn("postdata", kwargs)
-            self.assertEquals(kwargs["method"], "POST")
-            self.assertEquals(kwargs["timeout"], 30)
+            self.assertEqual(kwargs["method"], "POST")
+            self.assertEqual(kwargs["timeout"], 30)
             return succeed(payload.sample_describe_instances_result)
 
         client.Query.get_page = get_page
@@ -120,10 +120,10 @@ class EC2ClientTestCase(TestCase):
         )
 
         def check_parsed_availability_zone(results):
-            self.assertEquals(len(results), 1)
+            self.assertEqual(len(results), 1)
             [zone] = results
-            self.assertEquals(zone.name, "us-east-1a")
-            self.assertEquals(zone.state, "available")
+            self.assertEqual(zone.name, "us-east-1a")
+            self.assertEqual(zone.state, "available")
 
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds, query_factory=factory)
@@ -142,13 +142,13 @@ class EC2ClientTestCase(TestCase):
         )
 
         def check_parsed_availability_zones(results):
-            self.assertEquals(len(results), 3)
-            self.assertEquals(results[0].name, "us-east-1a")
-            self.assertEquals(results[0].state, "available")
-            self.assertEquals(results[1].name, "us-east-1b")
-            self.assertEquals(results[1].state, "available")
-            self.assertEquals(results[2].name, "us-east-1c")
-            self.assertEquals(results[2].state, "available")
+            self.assertEqual(len(results), 3)
+            self.assertEqual(results[0].name, "us-east-1a")
+            self.assertEqual(results[0].state, "available")
+            self.assertEqual(results[1].name, "us-east-1b")
+            self.assertEqual(results[1].state, "available")
+            self.assertEqual(results[2].name, "us-east-1c")
+            self.assertEqual(results[2].state, "available")
 
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds, query_factory=factory)
@@ -163,63 +163,63 @@ class EC2ClientInstancesTestCase(TestCase):
         instance = results[0]
         # check reservations
         reservation = instance.reservation
-        self.assertEquals(reservation.reservation_id, "r-cf24b1a6")
-        self.assertEquals(reservation.owner_id, "123456789012")
+        self.assertEqual(reservation.reservation_id, "r-cf24b1a6")
+        self.assertEqual(reservation.owner_id, "123456789012")
         # check groups
         group = reservation.groups[0]
-        self.assertEquals(group[0], "sg-64f9eb08")
-        self.assertEquals(group[1], "default")
+        self.assertEqual(group[0], "sg-64f9eb08")
+        self.assertEqual(group[1], "default")
         # check instance
-        self.assertEquals(instance.instance_id, "i-abcdef01")
-        self.assertEquals(instance.instance_state, "running")
-        self.assertEquals(instance.instance_type, "c1.xlarge")
-        self.assertEquals(instance.image_id, "ami-12345678")
-        self.assertEquals(
+        self.assertEqual(instance.instance_id, "i-abcdef01")
+        self.assertEqual(instance.instance_state, "running")
+        self.assertEqual(instance.instance_type, "c1.xlarge")
+        self.assertEqual(instance.image_id, "ami-12345678")
+        self.assertEqual(
             instance.private_dns_name,
             "domU-12-31-39-03-15-11.compute-1.internal")
-        self.assertEquals(
+        self.assertEqual(
             instance.dns_name,
             "ec2-75-101-245-65.compute-1.amazonaws.com")
-        self.assertEquals(instance.private_ip_address, "10.0.0.1")
-        self.assertEquals(instance.ip_address, "75.101.245.65")
-        self.assertEquals(instance.key_name, "keyname")
-        self.assertEquals(instance.ami_launch_index, "0")
-        self.assertEquals(instance.launch_time, "2009-04-27T02:23:18.000Z")
-        self.assertEquals(instance.placement, "us-east-1c")
-        self.assertEquals(instance.product_codes, ["774F4FF8"])
-        self.assertEquals(instance.kernel_id, "aki-b51cf9dc")
-        self.assertEquals(instance.ramdisk_id, "ari-b31cf9da")
+        self.assertEqual(instance.private_ip_address, "10.0.0.1")
+        self.assertEqual(instance.ip_address, "75.101.245.65")
+        self.assertEqual(instance.key_name, "keyname")
+        self.assertEqual(instance.ami_launch_index, "0")
+        self.assertEqual(instance.launch_time, "2009-04-27T02:23:18.000Z")
+        self.assertEqual(instance.placement, "us-east-1c")
+        self.assertEqual(instance.product_codes, ["774F4FF8"])
+        self.assertEqual(instance.kernel_id, "aki-b51cf9dc")
+        self.assertEqual(instance.ramdisk_id, "ari-b31cf9da")
 
     def check_parsed_instances_required(self, results):
         instance = results[0]
         # check reservations
         reservation = instance.reservation
-        self.assertEquals(reservation.reservation_id, "r-cf24b1a6")
-        self.assertEquals(reservation.owner_id, "123456789012")
+        self.assertEqual(reservation.reservation_id, "r-cf24b1a6")
+        self.assertEqual(reservation.owner_id, "123456789012")
         # check groups
         group = reservation.groups[0]
-        self.assertEquals(group[0], "sg-64f9eb08")
-        self.assertEquals(group[1], "default")
+        self.assertEqual(group[0], "sg-64f9eb08")
+        self.assertEqual(group[1], "default")
         # check instance
-        self.assertEquals(instance.instance_id, "i-abcdef01")
-        self.assertEquals(instance.instance_state, "running")
-        self.assertEquals(instance.instance_type, "c1.xlarge")
-        self.assertEquals(instance.image_id, "ami-12345678")
-        self.assertEquals(
+        self.assertEqual(instance.instance_id, "i-abcdef01")
+        self.assertEqual(instance.instance_state, "running")
+        self.assertEqual(instance.instance_type, "c1.xlarge")
+        self.assertEqual(instance.image_id, "ami-12345678")
+        self.assertEqual(
             instance.private_dns_name,
             "domU-12-31-39-03-15-11.compute-1.internal")
-        self.assertEquals(
+        self.assertEqual(
             instance.dns_name,
             "ec2-75-101-245-65.compute-1.amazonaws.com")
-        self.assertEquals(instance.private_ip_address, "10.0.0.1")
-        self.assertEquals(instance.ip_address, "75.101.245.65")
-        self.assertEquals(instance.key_name, None)
-        self.assertEquals(instance.ami_launch_index, None)
-        self.assertEquals(instance.launch_time, "2009-04-27T02:23:18.000Z")
-        self.assertEquals(instance.placement, "us-east-1c")
-        self.assertEquals(instance.product_codes, [])
-        self.assertEquals(instance.kernel_id, None)
-        self.assertEquals(instance.ramdisk_id, None)
+        self.assertEqual(instance.private_ip_address, "10.0.0.1")
+        self.assertEqual(instance.ip_address, "75.101.245.65")
+        self.assertEqual(instance.key_name, None)
+        self.assertEqual(instance.ami_launch_index, None)
+        self.assertEqual(instance.launch_time, "2009-04-27T02:23:18.000Z")
+        self.assertEqual(instance.placement, "us-east-1c")
+        self.assertEqual(instance.product_codes, [])
+        self.assertEqual(instance.kernel_id, None)
+        self.assertEqual(instance.ramdisk_id, None)
 
     def test_parse_reservation(self):
         creds = AWSCredentials("foo", "bar")
@@ -303,27 +303,27 @@ class EC2ClientInstancesTestCase(TestCase):
         instance = results[0]
         # check reservations
         reservation = instance.reservation
-        self.assertEquals(reservation.reservation_id, "r-47a5402e")
-        self.assertEquals(reservation.owner_id, "495219933132")
+        self.assertEqual(reservation.reservation_id, "r-47a5402e")
+        self.assertEqual(reservation.owner_id, "495219933132")
         # check groups
         group = reservation.groups[0]
-        self.assertEquals(group[0], "sg-64f9eb08")
-        self.assertEquals(group[1], "default")
+        self.assertEqual(group[0], "sg-64f9eb08")
+        self.assertEqual(group[1], "default")
         # check instance
-        self.assertEquals(instance.instance_id, "i-2ba64342")
-        self.assertEquals(instance.instance_state, "pending")
-        self.assertEquals(instance.instance_type, "m1.small")
-        self.assertEquals(instance.placement, "us-east-1b")
+        self.assertEqual(instance.instance_id, "i-2ba64342")
+        self.assertEqual(instance.instance_state, "pending")
+        self.assertEqual(instance.instance_type, "m1.small")
+        self.assertEqual(instance.placement, "us-east-1b")
         instance = results[1]
-        self.assertEquals(instance.instance_id, "i-2bc64242")
-        self.assertEquals(instance.instance_state, "pending")
-        self.assertEquals(instance.instance_type, "m1.small")
-        self.assertEquals(instance.placement, "us-east-1b")
+        self.assertEqual(instance.instance_id, "i-2bc64242")
+        self.assertEqual(instance.instance_state, "pending")
+        self.assertEqual(instance.instance_type, "m1.small")
+        self.assertEqual(instance.placement, "us-east-1b")
         instance = results[2]
-        self.assertEquals(instance.instance_id, "i-2be64332")
-        self.assertEquals(instance.instance_state, "pending")
-        self.assertEquals(instance.instance_type, "m1.small")
-        self.assertEquals(instance.placement, "us-east-1b")
+        self.assertEqual(instance.instance_id, "i-2be64332")
+        self.assertEqual(instance.instance_state, "pending")
+        self.assertEqual(instance.instance_type, "m1.small")
+        self.assertEqual(instance.placement, "us-east-1b")
 
     def test_run_instances(self):
 
@@ -333,18 +333,18 @@ class EC2ClientInstancesTestCase(TestCase):
             "foo",
             "bar",
             {"ImageId": "ami-1234", "MaxCount": "2", "MinCount": "1",
-             "SecurityGroup.1": u"group1", "KeyName": u"default",
-             "UserData": "Zm9v", "InstanceType": u"m1.small",
-             "Placement.AvailabilityZone": u"us-east-1b",
-             "KernelId": u"k-1234", "RamdiskId": u"r-1234"},
+             "SecurityGroup.1": "group1", "KeyName": "default",
+             "UserData": b"Zm9v", "InstanceType": "m1.small",
+             "Placement.AvailabilityZone": "us-east-1b",
+             "KernelId": "k-1234", "RamdiskId": "r-1234"},
         )
 
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds, query_factory=factory)
-        d = ec2.run_instances("ami-1234", 1, 2, security_groups=[u"group1"],
-            key_name=u"default", user_data=u"foo", instance_type=u"m1.small",
-            availability_zone=u"us-east-1b", kernel_id=u"k-1234",
-            ramdisk_id=u"r-1234")
+        d = ec2.run_instances("ami-1234", 1, 2, security_groups=["group1"],
+            key_name="default", user_data="foo", instance_type="m1.small",
+            availability_zone="us-east-1b", kernel_id="k-1234",
+            ramdisk_id="r-1234")
         d.addCallback(self.check_parsed_run_instances)
 
     def test_run_instances_with_subnet(self):
@@ -354,28 +354,28 @@ class EC2ClientInstancesTestCase(TestCase):
             "foo",
             "bar",
             {"ImageId": "ami-1234", "MaxCount": "2", "MinCount": "1",
-             "SecurityGroupId.1": u"sg-a72d9f92e", "KeyName": u"default",
-             "UserData": "Zm9v", "InstanceType": u"m1.small",
-             "Placement.AvailabilityZone": u"us-east-1b",
-             "KernelId": u"k-1234", "RamdiskId": u"r-1234",
+             "SecurityGroupId.1": "sg-a72d9f92e", "KeyName": "default",
+             "UserData": b"Zm9v", "InstanceType": "m1.small",
+             "Placement.AvailabilityZone": "us-east-1b",
+             "KernelId": "k-1234", "RamdiskId": "r-1234",
              "SubnetId": "subnet-a72d829f"},
         )
 
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds, query_factory=factory)
-        d = ec2.run_instances("ami-1234", 1, 2, security_group_ids=[u"sg-a72d9f92e"],
-            key_name=u"default", user_data=u"foo", instance_type=u"m1.small",
-            availability_zone=u"us-east-1b", kernel_id=u"k-1234",
-            ramdisk_id=u"r-1234", subnet_id="subnet-a72d829f")
+        d = ec2.run_instances("ami-1234", 1, 2, security_group_ids=["sg-a72d9f92e"],
+            key_name="default", user_data="foo", instance_type="m1.small",
+            availability_zone="us-east-1b", kernel_id="k-1234",
+            ramdisk_id="r-1234", subnet_id="subnet-a72d829f")
         d.addCallback(self.check_parsed_run_instances)
 
     def test_run_instances_with_subnet_but_without_secgroup_id(self):
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds)
         error = self.assertRaises(ValueError, ec2.run_instances, "ami-1234", 1, 2,
-            key_name=u"default", user_data=u"foo", instance_type=u"m1.small",
-            availability_zone=u"us-east-1b", kernel_id=u"k-1234",
-            ramdisk_id=u"r-1234", subnet_id="subnet-a72d829f")
+            key_name="default", user_data="foo", instance_type="m1.small",
+            availability_zone="us-east-1b", kernel_id="k-1234",
+            ramdisk_id="r-1234", subnet_id="subnet-a72d829f")
         self.assertEqual(
             str(error),
             "You must specify the security_group_ids with the subnet_id"
@@ -385,9 +385,9 @@ class EC2ClientInstancesTestCase(TestCase):
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds)
         error = self.assertRaises(ValueError, ec2.run_instances, "ami-1234", 1, 2,
-            key_name=u"default", user_data=u"foo", instance_type=u"m1.small",
-            availability_zone=u"us-east-1b", kernel_id=u"k-1234",
-            ramdisk_id=u"r-1234")
+            key_name="default", user_data="foo", instance_type="m1.small",
+            availability_zone="us-east-1b", kernel_id="k-1234",
+            ramdisk_id="r-1234")
         self.assertEqual(
             str(error),
             ("You must specify either the subnet_id and "
@@ -458,7 +458,7 @@ class EC2ClientConsoleOutputTestCase(TestCase):
         from the cloud.
         """
         creds = AWSCredentials("foo", "bar")
-        instance_id = u"i-abcdef0123456789"
+        instance_id = "i-abcdef0123456789"
         query_factory = make_query_factory(
             payload.sample_get_console_output_result,
             "GetConsoleOutput",
@@ -478,7 +478,7 @@ class EC2ClientConsoleOutputTestCase(TestCase):
                 instance_id,
                 # Take from hard-coded payload
                 datetime(2010, 10, 14, 1, 12, 41, tzinfo=utc),
-                u"""\
+                """\
 Linux version 2.6.16-xenU (builder@patchbat.amazonsa) (gcc version 4.0.1 20050727 (Red Hat 4.0.1-5)) #1 SMP Thu Oct 26 08:41:26 SAST 2006
 BIOS-provided physical RAM map:
 Xen: 0000000000000000 - 000000006a400000 (usable)
@@ -513,13 +513,13 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
 
         def check_results(security_groups):
             [security_group] = security_groups
-            self.assertEquals(security_group.id, "sg-a1a1a1")
-            self.assertEquals(security_group.owner_id,
+            self.assertEqual(security_group.id, "sg-a1a1a1")
+            self.assertEqual(security_group.owner_id,
                               "UYY3TLBUXIEON5NQVUUX6OMPWBZIQNFM")
-            self.assertEquals(security_group.name, "WebServers")
-            self.assertEquals(security_group.description, "Web Servers")
-            self.assertEquals(security_group.allowed_groups, [])
-            self.assertEquals(
+            self.assertEqual(security_group.name, "WebServers")
+            self.assertEqual(security_group.description, "Web Servers")
+            self.assertEqual(security_group.allowed_groups, [])
+            self.assertEqual(
                 [(ip.ip_protocol, ip.from_port, ip.to_port, ip.cidr_ip)
                  for ip in security_group.allowed_ips],
                 [("tcp", 80, 80, "0.0.0.0/0")])
@@ -544,31 +544,31 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         )
 
         def check_results(security_groups):
-            self.assertEquals(len(security_groups), 2)
+            self.assertEqual(len(security_groups), 2)
 
             security_group = security_groups[0]
-            self.assertEquals(security_group.owner_id,
+            self.assertEqual(security_group.owner_id,
                               "UYY3TLBUXIEON5NQVUUX6OMPWBZIQNFM")
-            self.assertEquals(security_group.id, "sg-a1a1a1")
-            self.assertEquals(security_group.name, "MessageServers")
-            self.assertEquals(security_group.description, "Message Servers")
-            self.assertEquals(security_group.allowed_groups, [])
-            self.assertEquals(
+            self.assertEqual(security_group.id, "sg-a1a1a1")
+            self.assertEqual(security_group.name, "MessageServers")
+            self.assertEqual(security_group.description, "Message Servers")
+            self.assertEqual(security_group.allowed_groups, [])
+            self.assertEqual(
                 [(ip.ip_protocol, ip.from_port, ip.to_port, ip.cidr_ip)
                  for ip in security_group.allowed_ips],
                 [("tcp", 80, 80, "0.0.0.0/0")])
 
             security_group = security_groups[1]
-            self.assertEquals(security_group.owner_id,
+            self.assertEqual(security_group.owner_id,
                               "UYY3TLBUXIEON5NQVUUX6OMPWBZIQNFM")
-            self.assertEquals(security_group.id, "sg-c3c3c3")
-            self.assertEquals(security_group.name, "WebServers")
-            self.assertEquals(security_group.description, "Web Servers")
-            self.assertEquals([(pair.user_id, pair.group_name)
+            self.assertEqual(security_group.id, "sg-c3c3c3")
+            self.assertEqual(security_group.name, "WebServers")
+            self.assertEqual(security_group.description, "Web Servers")
+            self.assertEqual([(pair.user_id, pair.group_name)
                                for pair in security_group.allowed_groups],
                               [("group-user-id", "group-name1"),
                                ("group-user-id", "group-name2")])
-            self.assertEquals(
+            self.assertEqual(
                 [(ip.ip_protocol, ip.from_port, ip.to_port, ip.cidr_ip)
                  for ip in security_group.allowed_ips],
                 [("tcp", 80, 80, "0.0.0.0/0")])
@@ -592,15 +592,15 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         )
 
         def check_results(security_groups):
-            self.assertEquals(len(security_groups), 1)
+            self.assertEqual(len(security_groups), 1)
 
             security_group = security_groups[0]
-            self.assertEquals(security_group.name, "web/ssh")
-            self.assertEquals([(pair.user_id, pair.group_name)
+            self.assertEqual(security_group.name, "web/ssh")
+            self.assertEqual([(pair.user_id, pair.group_name)
                                for pair in security_group.allowed_groups],
                               [("170723411662", "default"),
                                ("175723011368", "test1")])
-            self.assertEquals(
+            self.assertEqual(
                 [(ip.ip_protocol, ip.from_port, ip.to_port, ip.cidr_ip)
                  for ip in security_group.allowed_ips],
                 [('tcp', 22, 22, '0.0.0.0/0'), ("tcp", 80, 80, "0.0.0.0/0")])
@@ -625,7 +625,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
 
         def check_result(security_groups):
             [security_group] = security_groups
-            self.assertEquals(security_group.name, "WebServers")
+            self.assertEqual(security_group.name, "WebServers")
 
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds, query_factory=query_factory)
@@ -650,7 +650,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
 
         def check_result(security_groups):
             [security_group] = security_groups
-            self.assertEquals(security_group.name, "WebServers")
+            self.assertEqual(security_group.name, "WebServers")
             self.assertEqual(
                 security_group.allowed_groups[0].group_name, "WebServers")
 
@@ -677,7 +677,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         )
 
         def check_result(id):
-            self.assertEquals(id, "sg-1a2b3c4d")
+            self.assertEqual(id, "sg-1a2b3c4d")
 
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds, query_factory=query_factory)
@@ -700,7 +700,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         )
 
         def check_result(id):
-            self.assertEquals(id, "sg-1a2b3c4d")
+            self.assertEqual(id, "sg-1a2b3c4d")
 
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds, query_factory=query_factory)
@@ -752,7 +752,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         creds = AWSCredentials("foo", "bar")
         ec2 = client.EC2Client(creds)
         error = self.assertRaises(ValueError, ec2.delete_security_group)
-        self.assertEquals(
+        self.assertEqual(
             str(error),
             "You must provide either the security group name or id",
         )
@@ -774,7 +774,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         )
 
         def check_error(error):
-            self.assertEquals(
+            self.assertEqual(
                 str(error),
                 ("Error Message: Group groupID1:GroupReferredTo is used by "
                  "groups: groupID2:UsingGroup"))
@@ -837,7 +837,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         ec2 = client.EC2Client(creds)
         error = self.assertRaises(ValueError, ec2.authorize_security_group,
                 source_group_name="AppServers", source_group_owner_id="123456789123")
-        self.assertEquals(
+        self.assertEqual(
             str(error),
             "You must specify either the group name of the group id.")
 
@@ -881,7 +881,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         ec2 = client.EC2Client(creds)
         error = self.assertRaises(ValueError, ec2.authorize_security_group,
                 group_name="WebServers", ip_protocol="tcp", from_port="22")
-        self.assertEquals(
+        self.assertEqual(
             str(error),
             ("You must specify either both group parameters or all the "
              "ip parameters."))
@@ -1015,7 +1015,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         ec2 = client.EC2Client(creds)
         error = self.assertRaises(ValueError, ec2.revoke_security_group,
                 source_group_name="AppServers", source_group_owner_id="123456789123")
-        self.assertEquals(
+        self.assertEqual(
             str(error),
             "You must specify either the group name of the group id.")
 
@@ -1032,7 +1032,7 @@ class EC2ClientSecurityGroupsTestCase(TestCase):
         ec2 = client.EC2Client(creds)
         error = self.assertRaises(ValueError, ec2.revoke_security_group,
                 group_name="WebServers", ip_protocol="tcp", from_port="22")
-        self.assertEquals(
+        self.assertEqual(
             str(error),
             ("You must specify either both group parameters or all the "
              "ip parameters."))
@@ -1095,22 +1095,22 @@ class EC2ClientEBSTestCase(TestCase):
         self.endpoint = AWSServiceEndpoint(uri=EC2_ENDPOINT_US)
 
     def check_parsed_volumes(self, volumes):
-        self.assertEquals(len(volumes), 1)
+        self.assertEqual(len(volumes), 1)
         volume = volumes[0]
-        self.assertEquals(volume.id, "vol-4282672b")
-        self.assertEquals(volume.size, 800)
-        self.assertEquals(volume.status, "in-use")
-        self.assertEquals(volume.availability_zone, "us-east-1a")
-        self.assertEquals(volume.snapshot_id, "snap-12345678")
-        create_time = datetime(2008, 05, 07, 11, 51, 50)
-        self.assertEquals(volume.create_time, create_time)
-        self.assertEquals(len(volume.attachments), 1)
+        self.assertEqual(volume.id, "vol-4282672b")
+        self.assertEqual(volume.size, 800)
+        self.assertEqual(volume.status, "in-use")
+        self.assertEqual(volume.availability_zone, "us-east-1a")
+        self.assertEqual(volume.snapshot_id, "snap-12345678")
+        create_time = datetime(2008, 0o5, 0o7, 11, 51, 50)
+        self.assertEqual(volume.create_time, create_time)
+        self.assertEqual(len(volume.attachments), 1)
         attachment = volume.attachments[0]
-        self.assertEquals(attachment.instance_id, "i-6058a509")
-        self.assertEquals(attachment.status, "attached")
-        self.assertEquals(attachment.device, u"/dev/sdh")
-        attach_time = datetime(2008, 05, 07, 12, 51, 50)
-        self.assertEquals(attachment.attach_time, attach_time)
+        self.assertEqual(attachment.instance_id, "i-6058a509")
+        self.assertEqual(attachment.status, "attached")
+        self.assertEqual(attachment.device, "/dev/sdh")
+        attach_time = datetime(2008, 0o5, 0o7, 12, 51, 50)
+        self.assertEqual(attachment.attach_time, attach_time)
 
     def test_describe_volumes(self):
 
@@ -1145,14 +1145,14 @@ class EC2ClientEBSTestCase(TestCase):
         return d
 
     def check_parsed_snapshots(self, snapshots):
-        self.assertEquals(len(snapshots), 1)
+        self.assertEqual(len(snapshots), 1)
         snapshot = snapshots[0]
-        self.assertEquals(snapshot.id, "snap-78a54011")
-        self.assertEquals(snapshot.volume_id, "vol-4d826724")
-        self.assertEquals(snapshot.status, "pending")
-        start_time = datetime(2008, 05, 07, 12, 51, 50)
-        self.assertEquals(snapshot.start_time, start_time)
-        self.assertEquals(snapshot.progress, 0.8)
+        self.assertEqual(snapshot.id, "snap-78a54011")
+        self.assertEqual(snapshot.volume_id, "vol-4d826724")
+        self.assertEqual(snapshot.status, "pending")
+        start_time = datetime(2008, 0o5, 0o7, 12, 51, 50)
+        self.assertEqual(snapshot.start_time, start_time)
+        self.assertEqual(snapshot.progress, 0.8)
 
     def test_describe_snapshots(self):
 
@@ -1197,11 +1197,11 @@ class EC2ClientEBSTestCase(TestCase):
         )
 
         def check_parsed_volume(volume):
-            self.assertEquals(volume.id, "vol-4d826724")
-            self.assertEquals(volume.size, 800)
-            self.assertEquals(volume.snapshot_id, "")
-            create_time = datetime(2008, 05, 07, 11, 51, 50)
-            self.assertEquals(volume.create_time, create_time)
+            self.assertEqual(volume.id, "vol-4d826724")
+            self.assertEqual(volume.size, 800)
+            self.assertEqual(volume.snapshot_id, "")
+            create_time = datetime(2008, 0o5, 0o7, 11, 51, 50)
+            self.assertEqual(volume.create_time, create_time)
 
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint,
                                query_factory=factory)
@@ -1221,10 +1221,10 @@ class EC2ClientEBSTestCase(TestCase):
         )
 
         def check_parsed_volume(volume):
-            self.assertEquals(volume.id, "vol-4d826724")
-            self.assertEquals(volume.size, 800)
-            create_time = datetime(2008, 05, 07, 11, 51, 50)
-            self.assertEquals(volume.create_time, create_time)
+            self.assertEqual(volume.id, "vol-4d826724")
+            self.assertEqual(volume.size, 800)
+            create_time = datetime(2008, 0o5, 0o7, 11, 51, 50)
+            self.assertEqual(volume.create_time, create_time)
 
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint,
                                query_factory=factory)
@@ -1235,7 +1235,7 @@ class EC2ClientEBSTestCase(TestCase):
     def test_create_volume_no_params(self):
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint)
         error = self.assertRaises(ValueError, ec2.create_volume, "us-east-1")
-        self.assertEquals(
+        self.assertEqual(
             str(error),
             "Please provide either size or snapshot_id")
 
@@ -1243,7 +1243,7 @@ class EC2ClientEBSTestCase(TestCase):
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint)
         error = self.assertRaises(ValueError, ec2.create_volume, "us-east-1",
                                   size=800, snapshot_id="snap-12345678")
-        self.assertEquals(
+        self.assertEqual(
             str(error),
             "Please provide either size or snapshot_id")
 
@@ -1260,7 +1260,7 @@ class EC2ClientEBSTestCase(TestCase):
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint,
                                query_factory=factory)
         d = ec2.delete_volume("vol-4282672b")
-        d.addCallback(self.assertEquals, True)
+        d.addCallback(self.assertEqual, True)
         return d
 
     def test_create_snapshot(self):
@@ -1274,12 +1274,12 @@ class EC2ClientEBSTestCase(TestCase):
         )
 
         def check_parsed_snapshot(snapshot):
-            self.assertEquals(snapshot.id, "snap-78a54011")
-            self.assertEquals(snapshot.volume_id, "vol-4d826724")
-            self.assertEquals(snapshot.status, "pending")
-            start_time = datetime(2008, 05, 07, 12, 51, 50)
-            self.assertEquals(snapshot.start_time, start_time)
-            self.assertEquals(snapshot.progress, 0)
+            self.assertEqual(snapshot.id, "snap-78a54011")
+            self.assertEqual(snapshot.volume_id, "vol-4d826724")
+            self.assertEqual(snapshot.status, "pending")
+            start_time = datetime(2008, 0o5, 0o7, 12, 51, 50)
+            self.assertEqual(snapshot.start_time, start_time)
+            self.assertEqual(snapshot.progress, 0)
 
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint,
                                query_factory=factory)
@@ -1300,7 +1300,7 @@ class EC2ClientEBSTestCase(TestCase):
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint,
                                query_factory=factory)
         d = ec2.delete_snapshot("snap-78a54011")
-        d.addCallback(self.assertEquals, True)
+        d.addCallback(self.assertEqual, True)
         return d
 
     def test_attach_volume(self):
@@ -1315,10 +1315,10 @@ class EC2ClientEBSTestCase(TestCase):
         )
 
         def check_parsed_response(response):
-            self.assertEquals(
+            self.assertEqual(
                 response,
                 {"status": "attaching",
-                 "attach_time": datetime(2008, 05, 07, 11, 51, 50)})
+                 "attach_time": datetime(2008, 0o5, 0o7, 11, 51, 50)})
 
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint,
                                query_factory=factory)
@@ -1327,10 +1327,10 @@ class EC2ClientEBSTestCase(TestCase):
         return d
 
     def check_parsed_keypairs(self, results):
-        self.assertEquals(len(results), 1)
+        self.assertEqual(len(results), 1)
         keypair = results[0]
-        self.assertEquals(keypair.name, "gsg-keypair")
-        self.assertEquals(
+        self.assertEqual(keypair.name, "gsg-keypair")
+        self.assertEqual(
             keypair.fingerprint,
             "1f:51:ae:28:bf:89:e9:d8:1f:25:5d:37:2d:7d:b8:ca:9f:f5:f1:6f")
 
@@ -1352,14 +1352,14 @@ class EC2ClientEBSTestCase(TestCase):
     def test_multiple_describe_keypairs(self):
 
         def check_parsed_keypairs(results):
-            self.assertEquals(len(results), 2)
+            self.assertEqual(len(results), 2)
             keypair1, keypair2 = results
-            self.assertEquals(keypair1.name, "gsg-keypair-1")
-            self.assertEquals(
+            self.assertEqual(keypair1.name, "gsg-keypair-1")
+            self.assertEqual(
                 keypair1.fingerprint,
                 "1f:51:ae:28:bf:89:e9:d8:1f:25:5d:37:2d:7d:b8:ca:9f:f5:f1:6f")
-            self.assertEquals(keypair2.name, "gsg-keypair-2")
-            self.assertEquals(
+            self.assertEqual(keypair2.name, "gsg-keypair-2")
+            self.assertEqual(
                 keypair2.fingerprint,
                 "1f:51:ae:28:bf:89:e9:d8:1f:25:5d:37:2d:7d:b8:ca:9f:f5:f1:70")
 
@@ -1394,15 +1394,15 @@ class EC2ClientEBSTestCase(TestCase):
     def test_create_keypair(self):
 
         def check_parsed_create_keypair(keypair):
-            self.assertEquals(keypair.name, "example-key-name")
-            self.assertEquals(
+            self.assertEqual(keypair.name, "example-key-name")
+            self.assertEqual(
                 keypair.fingerprint,
                 "1f:51:ae:28:bf:89:e9:d8:1f:25:5d:37:2d:7d:b8:ca:9f:f5:f1:6f")
             self.assertTrue(keypair.material.startswith(
                 "-----BEGIN RSA PRIVATE KEY-----"))
             self.assertTrue(keypair.material.endswith(
                 "-----END RSA PRIVATE KEY-----"))
-            self.assertEquals(len(keypair.material), 1670)
+            self.assertEqual(len(keypair.material), 1670)
 
         factory = make_query_factory(
             payload.sample_create_keypair_result,
@@ -1470,11 +1470,11 @@ class EC2ClientEBSTestCase(TestCase):
         """
 
         def check_parsed_import_keypair(keypair):
-            self.assertEquals(keypair.name, "example-key-name")
-            self.assertEquals(
+            self.assertEqual(keypair.name, "example-key-name")
+            self.assertEqual(
                 keypair.fingerprint,
                 "1f:51:ae:28:bf:89:e9:d8:1f:25:5d:37:2d:7d:b8:ca:9f:f5:f1:6f")
-            self.assertEquals(keypair.material, material)
+            self.assertEqual(keypair.material, material)
 
         factory = make_query_factory(
             payload.sample_import_keypair_result,
@@ -1483,10 +1483,10 @@ class EC2ClientEBSTestCase(TestCase):
             "bar",
             {"KeyName": "example-key-name",
              "PublicKeyMaterial":
-             "c3NoLWRzcyBBQUFBQjNOemFDMWtjM01BQUFDQkFQNmFjakFQeitUR"
-             "jJkREtmZGlhcnp2cXBBcjhlbUl6UElBWUp6QXNoTFgvUTJCZ2tWc0"
-             "42eGI2QUlIUGE1MUFtWXVieU5PYjMxeVhWS2FRQTF6L213SHZtRld"
-             "LQ1ZFQ0wwPSkgdXNlckBob3N0"},
+             b"c3NoLWRzcyBBQUFBQjNOemFDMWtjM01BQUFDQkFQNmFjakFQeitUR"
+             b"jJkREtmZGlhcnp2cXBBcjhlbUl6UElBWUp6QXNoTFgvUTJCZ2tWc0"
+             b"42eGI2QUlIUGE1MUFtWXVieU5PYjMxeVhWS2FRQTF6L213SHZtRld"
+             b"LQ1ZFQ0wwPSkgdXNlckBob3N0"},
         )
 
         ec2 = client.EC2Client(creds=self.creds, query_factory=factory)
@@ -1515,26 +1515,26 @@ class EC2ErrorWrapperTestCase(TestCase):
     def test_302_error(self):
         failure = self.make_failure(302, Exception, "found")
         error = self.assertRaises(Exception, client.ec2_error_wrapper, failure)
-        self.assertEquals(failure.type, type(error))
+        self.assertEqual(failure.type, type(error))
         self.assertFalse(isinstance(error, EC2Error))
         self.assertTrue(isinstance(error, Exception))
-        self.assertEquals(str(error), "found")
+        self.assertEqual(str(error), "found")
 
     def test_400_error(self):
         failure = self.make_failure(400, TwistedWebError)
         error = self.assertRaises(EC2Error, client.ec2_error_wrapper, failure)
-        self.assertNotEquals(failure.type, type(error))
+        self.assertNotEqual(failure.type, type(error))
         self.assertTrue(isinstance(error, EC2Error))
-        self.assertEquals(error.get_error_codes(), "Error.Code")
-        self.assertEquals(error.get_error_messages(), "Message for Error.Code")
+        self.assertEqual(error.get_error_codes(), "Error.Code")
+        self.assertEqual(error.get_error_messages(), "Message for Error.Code")
 
     def test_404_error(self):
         failure = self.make_failure(404, TwistedWebError)
         error = self.assertRaises(EC2Error, client.ec2_error_wrapper, failure)
-        self.assertNotEquals(failure.type, type(error))
+        self.assertNotEqual(failure.type, type(error))
         self.assertTrue(isinstance(error, EC2Error))
-        self.assertEquals(error.get_error_codes(), "Error.Code")
-        self.assertEquals(error.get_error_messages(), "Message for Error.Code")
+        self.assertEqual(error.get_error_codes(), "Error.Code")
+        self.assertEqual(error.get_error_messages(), "Message for Error.Code")
 
     def test_non_EC2_404_error(self):
         """
@@ -1548,8 +1548,8 @@ class EC2ErrorWrapperTestCase(TestCase):
         error = self.assertRaises(
             TwistedWebError, client.ec2_error_wrapper, failure)
         self.assertTrue(isinstance(error, TwistedWebError))
-        self.assertEquals(error.status, status)
-        self.assertEquals(str(error), "{} Not Found".format(status))
+        self.assertEqual(error.status, status)
+        self.assertEqual(str(error), "{} Not Found".format(status))
 
     def test_500_error(self):
         failure = self.make_failure(
@@ -1557,12 +1557,12 @@ class EC2ErrorWrapperTestCase(TestCase):
             response=payload.sample_server_internal_error_result)
         error = self.assertRaises(EC2Error, client.ec2_error_wrapper, failure)
         self.assertTrue(isinstance(error, EC2Error))
-        self.assertEquals(error.get_error_codes(), "InternalError")
-        self.assertEquals(
+        self.assertEqual(error.get_error_codes(), "InternalError")
+        self.assertEqual(
             error.get_error_messages(),
             "We encountered an internal error. Please try again.")
-        self.assertEquals(error.request_id, "A2A7E5395E27DFBB")
-        self.assertEquals(
+        self.assertEqual(error.request_id, "A2A7E5395E27DFBB")
+        self.assertEqual(
             error.host_id,
             "f691zulHNsUqonsZkjhILnvWwD3ZnmOM4ObM1wXTc6xuS3GzPmjArp8QC/sGsn6K")
 
@@ -1571,14 +1571,14 @@ class EC2ErrorWrapperTestCase(TestCase):
         error = self.assertRaises(Exception, client.ec2_error_wrapper, failure)
         self.assertFalse(isinstance(error, EC2Error))
         self.assertTrue(isinstance(error, Exception))
-        self.assertEquals(str(error), "A server error occurred")
+        self.assertEqual(str(error), "A server error occurred")
 
     def test_timeout_error(self):
         failure = self.make_failure(type=Exception, message="timeout")
         error = self.assertRaises(Exception, client.ec2_error_wrapper, failure)
         self.assertFalse(isinstance(error, EC2Error))
         self.assertTrue(isinstance(error, Exception))
-        self.assertEquals(str(error), "timeout")
+        self.assertEqual(str(error), "timeout")
 
     def test_connection_error(self):
         failure = self.make_failure(type=ConnectionRefusedError)
@@ -1592,7 +1592,7 @@ class EC2ErrorWrapperTestCase(TestCase):
         failure = self.make_failure(400, type=TwistedWebError,
                                     response=bad_payload)
         error = self.assertRaises(Exception, client.ec2_error_wrapper, failure)
-        self.assertEquals(str(error), "400 Bad Request")
+        self.assertEqual(str(error), "400 Bad Request")
 
 
 class QueryTestCase(TestCase):
@@ -1704,12 +1704,12 @@ class QueryTestCase(TestCase):
 
         def check_error(error):
             self.assertTrue(isinstance(error, EC2Error))
-            self.assertEquals(error.get_error_codes(), "Error.Code")
-            self.assertEquals(
+            self.assertEqual(error.get_error_codes(), "Error.Code")
+            self.assertEqual(
                 error.get_error_messages(),
                 "Message for Error.Code")
-            self.assertEquals(error.status, status)
-            self.assertEquals(error.response, payload.sample_ec2_error_message)
+            self.assertEqual(error.status, status)
+            self.assertEqual(error.response, payload.sample_ec2_error_message)
 
         query = client.Query(
             action='BadQuery', creds=self.creds, endpoint=self.endpoint,
@@ -1734,7 +1734,7 @@ class QueryTestCase(TestCase):
 
         def check_error(error):
             self.assertTrue(isinstance(error, TwistedWebError))
-            self.assertEquals(error.status, status)
+            self.assertEqual(error.status, status)
 
         query = client.Query(
             action='BadQuery', creds=self.creds, endpoint=self.endpoint,
@@ -1759,9 +1759,9 @@ class QueryTestCase(TestCase):
 
         def check_error(error):
             self.assertTrue(isinstance(error, EC2Error))
-            self.assertEquals(error.status, status)
-            self.assertEquals(error.get_error_codes(), "InternalError")
-            self.assertEquals(
+            self.assertEqual(error.status, status)
+            self.assertEqual(error.get_error_codes(), "InternalError")
+            self.assertEqual(
                 error.get_error_messages(),
                 "We encountered an internal error. Please try again.")
 
@@ -1800,7 +1800,7 @@ class SignatureTestCase(TestCase):
         signature = client.Signature(self.creds, self.endpoint, self.params)
         self.assertEqual(
             "f%C3%A9e",
-            signature.encode(u"f\N{LATIN SMALL LETTER E WITH ACUTE}e"))
+            signature.encode("f\N{LATIN SMALL LETTER E WITH ACUTE}e"))
 
     def test_canonical_query(self):
         signature = client.Signature(self.creds, self.endpoint, self.params)
@@ -1887,7 +1887,7 @@ class QueryPageGetterTestCase(TestCase):
         """Copied from twisted.web.test.test_webclient."""
         # If the test indicated it might leave some server-side connections
         # around, clean them up.
-        connections = self.wrapper.protocols.keys()
+        connections = list(self.wrapper.protocols.keys())
         # If there are fewer server-side connections than requested,
         # that's okay.  Some might have noticed that the client closed
         # the connection and cleaned up after themselves.
@@ -1906,7 +1906,7 @@ class QueryPageGetterTestCase(TestCase):
     def twisted_client_test_setup(self):
         name = self.mktemp()
         os.mkdir(name)
-        FilePath(name).child("file").setContent("0123456789")
+        FilePath(name).child("file").setContent(b"0123456789")
         resource = static.File(name)
         resource.putChild("redirect", util.Redirect("/file"))
         self.site = server.Site(resource, timeout=None)
@@ -1923,7 +1923,7 @@ class QueryPageGetterTestCase(TestCase):
             action="DummyQuery", creds=self.creds, endpoint=self.endpoint,
             time_tuple=(2009, 8, 15, 13, 14, 15, 0, 0, 0))
         deferred = query.get_page(self.get_url("file"))
-        deferred.addCallback(self.assertEquals, "0123456789")
+        deferred.addCallback(self.assertEqual, b"0123456789")
         return deferred
 
 
@@ -1947,7 +1947,7 @@ class EC2ClientAddressTestCase(TestCase):
                                query_factory=factory)
         d = ec2.describe_addresses()
         d.addCallback(
-            self.assertEquals, [("67.202.55.255", "i-28a64341"),
+            self.assertEqual, [("67.202.55.255", "i-28a64341"),
                                 ("67.202.55.233", None)])
         return d
 
@@ -1965,7 +1965,7 @@ class EC2ClientAddressTestCase(TestCase):
                                query_factory=factory)
         d = ec2.describe_addresses("67.202.55.255")
         d.addCallback(
-            self.assertEquals, [("67.202.55.255", "i-28a64341"),
+            self.assertEqual, [("67.202.55.255", "i-28a64341"),
                                 ("67.202.55.233", None)])
         return d
 
@@ -1999,7 +1999,7 @@ class EC2ClientAddressTestCase(TestCase):
         ec2 = client.EC2Client(creds=self.creds, endpoint=self.endpoint,
                                query_factory=factory)
         d = ec2.allocate_address()
-        d.addCallback(self.assertEquals, "67.202.55.255")
+        d.addCallback(self.assertEqual, "67.202.55.255")
         return d
 
     def test_release_address(self):
@@ -2062,7 +2062,7 @@ class EC2ParserTestCase(TestCase):
     </instancesSet>
 </TerminateInstancesResponse>"""
         ec2_response = self.parser.terminate_instances(ec2_xml)
-        self.assertEquals(
+        self.assertEqual(
             [('i-cab0c1aa', 'running', 'shutting-down')], ec2_response)
 
     def test_nova_terminate_instances(self):
@@ -2078,4 +2078,4 @@ class EC2ParserTestCase(TestCase):
             '4fe6643d-2346-4add-adb7-a1f61f37c043</requestId>'
             '<return>true</return></TerminateInstancesResponse>')
         nova_response = self.parser.terminate_instances(nova_xml)
-        self.assertEquals([], nova_response)
+        self.assertEqual([], nova_response)

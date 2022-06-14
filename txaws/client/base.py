@@ -126,7 +126,7 @@ class StreamingBodyReceiver(Protocol):
         with
         """
         if fd is None:
-            fd = StringIO()
+            fd = BytesIO()
         self._fd = fd
         self._received = 0
         self._readback = readback
@@ -183,12 +183,11 @@ class _QueryArgument(object):
     value = attr.ib(default=None, validator=validators.optional(validators.instance_of(str)))
 
     def url_encode(self):
-        def q(t):
-            return quote(t, safe="")
+        q = lambda t: quote(t, safe="")
 
         if self.value is None:
-            return q(self.name).encode()
-        return q(self.name).encode() + b"=" + q(self.value).encode()
+            return q(self.name)
+        return q(self.name) + "=" + q(self.value)
 
 
 def _tuples_to_queryarg(tuples):
@@ -255,27 +254,25 @@ class _URLContext(object):
     def get_encoded_host(self):
         """
         @return: The encoded host component.
-        @rtype: L{bytes}
+        @rtype: L{str}
         """
-        return self.host.encode("idna")
+        return self.host.encode("idna").decode()
 
 
     def get_encoded_path(self):
         """
         @return: The encoded path component.
-        @rtype: L{bytes}
+        @rtype: L{str}
         """
-        return b"/" + b"/".join(
-            quote(segment, safe="").encode() for segment in self.path
-        )
+        return "/" + "/".join(quote(segment, safe="") for segment in self.path)
 
 
     def get_encoded_query(self):
         """
         @return: The encoded query component.
-        @rtype: L{bytes}
+        @rtype: L{str}
         """
-        return b"&".join(arg.url_encode() for arg in self.query)
+        return "&".join(arg.url_encode() for arg in self.query)
 
 
     def get_encoded_url(self):
@@ -284,18 +281,18 @@ class _URLContext(object):
         @rtype: L{bytes}
         """
         params = {
-            b"scheme": self.scheme.encode("ascii"),
-            b"host": self.get_encoded_host(),
-            b"path": self.get_encoded_path(),
-            b"query": b"",
+            "scheme": self.scheme,
+            "host": self.get_encoded_host(),
+            "path": self.get_encoded_path(),
+            "query": "",
         }
         query = self.get_encoded_query()
         if query:
-            params[b"query"] = b"?" + query
+            params["query"] = "?" + query
         if self.port is None:
-            return b"%(scheme)s://%(host)s%(path)s%(query)s" % params
-        params[b"port"] = self.port
-        return b"%(scheme)s://%(host)s:%(port)d%(path)s%(query)s" % params
+            return "%(scheme)s://%(host)s%(path)s%(query)s" % params
+        params["port"] = self.port
+        return "%(scheme)s://%(host)s:%(port)d%(path)s%(query)s" % params
 
 
 def _get_joined_path(ctx):
@@ -677,7 +674,7 @@ class BaseQuery(object):
         self._method = method = kwds.get('method', 'GET')
         self.request_headers = self._headers(kwds.get('headers', {}))
         if (self.body_producer is None) and (data is not None):
-            self.body_producer = FileBodyProducer(StringIO(data))
+            self.body_producer = FileBodyProducer(BytesIO(data))
         if self.endpoint.ssl_hostname_verification:
             contextFactory = None
         else:
@@ -685,7 +682,8 @@ class BaseQuery(object):
         agent = _get_agent(scheme, host, self.reactor, contextFactory)
         if scheme == "https":
             self.client.url = url
-        d = agent.request(method, url, self.request_headers, self.body_producer)
+        d = agent.request(method.encode(), url.encode(), self.request_headers,
+                          self.body_producer)
         d.addCallback(self._handle_response)
         return d
 

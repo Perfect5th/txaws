@@ -21,11 +21,11 @@ class MaybeBytesToUnicodeTestCase(TestCase):
         """
         self.assertRaises(
             UnicodeDecodeError,
-            lambda: maybe_bytes_to_unicode(u"\N{SNOWMAN}".encode("utf-8")),
+            lambda: maybe_bytes_to_unicode("\N{SNOWMAN}".encode("utf-8")),
         )
         decoded = maybe_bytes_to_unicode(b"hello world")
-        self.assertIsInstance(decoded, unicode)
-        self.assertEqual(decoded, u"hello world")
+        self.assertIsInstance(decoded, str)
+        self.assertEqual(decoded, "hello world")
 
     def test_unicode(self):
         """
@@ -33,8 +33,8 @@ class MaybeBytesToUnicodeTestCase(TestCase):
         L{maybe_bytes_to_unicode} returns its input unmodified.
         """
         self.assertEqual(
-            u"\N{SNOWMAN}",
-            maybe_bytes_to_unicode(u"\N{SNOWMAN}"),
+            "\N{SNOWMAN}",
+            maybe_bytes_to_unicode("\N{SNOWMAN}"),
         )
 
 
@@ -58,5 +58,5 @@ class ToXMLTestCase(TestCase):
         """
         self.assertEqual(
             """<?xml version="1.0" encoding="UTF-8"?>\n<Foo>bar</Foo>""",
-            self.successResultOf(to_xml(tags.Foo(u"bar"))),
+            self.successResultOf(to_xml(tags.Foo("bar"))),
         )

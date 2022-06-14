@@ -699,7 +699,7 @@ class S3Client(BaseClient):
 class Query(BaseQuery):
     """A query for submission to the S3 service."""
 
-    def __init__(self, bucket=None, object_name=None, data="",
+    def __init__(self, bucket=None, object_name=None, data=b"",
                  content_type=None, metadata={}, amz_headers={},
                  body_producer=None, *args, **kwargs):
         super(Query, self).__init__(*args, **kwargs)
@@ -710,7 +710,7 @@ class Query(BaseQuery):
 
         self.bucket = bucket
         self.object_name = object_name
-        self.data = data
+        self.data = data.encode() if type(data) == str else data
         self.body_producer = body_producer
         self.content_type = content_type
         self.metadata = metadata
@@ -763,7 +763,7 @@ class Query(BaseQuery):
             headers["x-amz-content-sha256"] = hashlib.sha256(data).hexdigest()
         else:
             data = None
-            headers["x-amz-content-sha256"] = b"UNSIGNED-PAYLOAD"
+            headers["x-amz-content-sha256"] = "UNSIGNED-PAYLOAD"
         for key, value in self.metadata.items():
             headers["x-amz-meta-" + key] = value
         for key, value in self.amz_headers.items():

@@ -4,7 +4,7 @@
 Client wrapper for Amazon's Route53 (domain service).
 """
 
-from __future__ import print_function, unicode_literals
+
 
 __all__ = [
     "get_route53_client",
@@ -76,17 +76,17 @@ def get_route53_client(agent, region, cooperator=None):
 # http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html
 # API Version 2013-04-01
 RECORD_TYPES = {
-    u"SOA": SOA,
-    u"NS": NS,
-    u"A": A,
-    u"AAAA": AAAA,
-    u"MX": MX,
-    u"CNAME": CNAME,
-    u"NAPTR": NAPTR,
-    u"PTR": PTR,
-    u"SPF": SPF,
-    u"SRV": SRV,
-    u"TXT": TXT,
+    "SOA": SOA,
+    "NS": NS,
+    "A": A,
+    "AAAA": AAAA,
+    "MX": MX,
+    "CNAME": CNAME,
+    "NAPTR": NAPTR,
+    "PTR": PTR,
+    "SPF": SPF,
+    "SRV": SRV,
+    "TXT": TXT,
 }
 
 
@@ -161,7 +161,7 @@ class _Route53Client(object):
         """
         d = _route53_op(
             method=b"POST",
-            path=[u"2013-04-01", u"hostedzone"],
+            path=["2013-04-01", "hostedzone"],
             body=tags.CreateHostedZoneRequest(xmlns=_NS)(
                 tags.CallerReference(caller_reference),
                 tags.Name(name.encode("idna").decode("ascii")),
@@ -187,7 +187,7 @@ class _Route53Client(object):
         """
         d = _route53_op(
             method=b"GET",
-            path=[u"2013-04-01", u"hostedzone"],
+            path=["2013-04-01", "hostedzone"],
             extract_result=self._handle_list_hosted_zones_response,
         )
         d.addCallback(self._op)
@@ -210,7 +210,7 @@ class _Route53Client(object):
         """
         d = _route53_op(
             method=b"POST",
-            path=[u"2013-04-01", u"hostedzone", zone_id, u"rrset"],
+            path=["2013-04-01", "hostedzone", zone_id, "rrset"],
             body=tags.ChangeResourceRecordSetsRequest(xmlns=_NS)(
                 tags.ChangeBatch(
                     tags.Changes(list(
@@ -237,15 +237,15 @@ class _Route53Client(object):
         """
         args = []
         if maxitems:
-            args.append((u"maxitems", u"{}".format(maxitems)))
+            args.append(("maxitems", "{}".format(maxitems)))
         if name:
-            args.append((u"name", unicode(name)))
+            args.append(("name", str(name)))
         if type:
-            args.append((u"type", type))
+            args.append(("type", type))
 
         d = _route53_op(
             method=b"GET",
-            path=[u"2013-04-01", u"hostedzone", unicode(zone_id), u"rrset"],
+            path=["2013-04-01", "hostedzone", str(zone_id), "rrset"],
             query=args,
             extract_result=self._handle_list_resource_record_sets_response
         )
@@ -269,9 +269,9 @@ class _Route53Client(object):
                 # We didn't find anything we recognize.
                 msg(
                     format=(
-                        u"list_resource_record_sets() dropping unsupported "
-                        u"ResourceRecordSet type in result "
-                        u"(children=%(children)s)"
+                        "list_resource_record_sets() dropping unsupported "
+                        "ResourceRecordSet type in result "
+                        "(children=%(children)s)"
                     ),
                     children=rrset.getchildren(),
                 )
@@ -332,7 +332,7 @@ class _Route53Client(object):
         """
         d = _route53_op(
             method=b"DELETE",
-            path=[u"2013-04-01", u"hostedzone", zone_id],
+            path=["2013-04-01", "hostedzone", zone_id],
         )
         d.addCallback(self._op)
         return d
@@ -391,7 +391,7 @@ def hostedzone_from_element(zone):
     """
     return HostedZone(
         name=maybe_bytes_to_unicode(zone.find("Name").text).encode("ascii").decode("idna"),
-        identifier=maybe_bytes_to_unicode(zone.find("Id").text).replace(u"/hostedzone/", u""),
+        identifier=maybe_bytes_to_unicode(zone.find("Id").text).replace("/hostedzone/", ""),
         rrset_count=int(zone.find("ResourceRecordSetCount").text),
         reference=maybe_bytes_to_unicode(zone.find("CallerReference").text),
     )
@@ -410,13 +410,13 @@ def to_element(change):
         ),
         tags.ResourceRecordSet(
             tags.Name(
-                unicode(change.rrset.label),
+                str(change.rrset.label),
             ),
             tags.Type(
                 change.rrset.type,
             ),
             tags.TTL(
-                u"{}".format(change.rrset.ttl),
+                "{}".format(change.rrset.ttl),
             ),
             tags.ResourceRecords(list(
                 tags.ResourceRecord(tags.Value(rr.to_text()))

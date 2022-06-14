@@ -5,7 +5,7 @@ from OpenSSL.crypto import dump_certificate, load_certificate, FILETYPE_PEM
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.version import __version__ as pyopenssl_version
 
-from twisted.internet import reactor
+from twisted.internet import reactor, ssl as twisted_ssl
 from twisted.internet.ssl import DefaultOpenSSLContextFactory
 from twisted.protocols.policies import WrappingFactory
 from twisted.python import log
@@ -29,12 +29,12 @@ def sibpath(path):
     return FilePath(__file__).sibling(path).path
 
 
-PRIVKEY = sibpath("private.ssl")
-PUBKEY = sibpath("public.ssl")
+PRIVKEY = sibpath("server.key")
+PUBKEY = sibpath("server.crt")
 BADPRIVKEY = sibpath("badprivate.ssl")
 BADPUBKEY = sibpath("badpublic.ssl")
-PRIVSANKEY = sibpath("private_san.ssl")
-PUBSANKEY = sibpath("public_san.ssl")
+PRIVSANKEY = sibpath("server_san.key")
+PUBSANKEY = sibpath("server_san.crt")
 
 
 class WebDefaultOpenSSLContextFactory(DefaultOpenSSLContextFactory):
@@ -48,14 +48,14 @@ class BaseQuerySSLTestCase(TestCase):
         self.cleanupServerConnections = 0
         name = self.mktemp()
         os.mkdir(name)
-        FilePath(name).child("file").setContent("0123456789")
+        FilePath(name).child("file").setContent(b"0123456789")
         r = static.File(name)
         self.site = server.Site(r, timeout=None)
         self.wrapper = WrappingFactory(self.site)
-        pub_key = file(PUBKEY)
+        pub_key = open(PUBKEY)
         pub_key_data = pub_key.read()
         pub_key.close()
-        pub_key_san = file(PUBSANKEY)
+        pub_key_san = open(PUBSANKEY)
         pub_key_san_data = pub_key_san.read()
         pub_key_san.close()
         ssl._ca_certs = [load_certificate(FILETYPE_PEM, pub_key_data),
@@ -65,7 +65,7 @@ class BaseQuerySSLTestCase(TestCase):
         ssl._ca_certs = None
         # If the test indicated it might leave some server-side connections
         # around, clean them up.
-        connections = self.wrapper.protocols.keys()
+        connections = list(self.wrapper.protocols.keys())
         # If there are fewer server-side connections than requested,
         # that's okay.  Some might have noticed that the client closed
         # the connection and cleaned up after themselves.
@@ -93,7 +93,7 @@ class BaseQuerySSLTestCase(TestCase):
         endpoint = AWSServiceEndpoint(ssl_hostname_verification=True)
         query = BaseQuery("an action", "creds", endpoint)
         d = query.get_page(self._get_url("file"))
-        return d.addCallback(self.assertEquals, "0123456789")
+        return d.addCallback(self.assertEqual, b"0123456789")
 
     def test_ssl_verification_negative(self):
         """
@@ -113,8 +113,8 @@ class BaseQuerySSLTestCase(TestCase):
         def check_exception(why):
             # XXX kind of a mess here ... need to unwrap the
             # exception and check
-            root_exc = why.value[0][0].value
-            self.assert_(isinstance(root_exc, SSLError))
+            root_exc = why.value.reasons[0].value
+            self.assertTrue(isinstance(root_exc, SSLError))
         return d.addCallbacks(fail, check_exception)
 
     def test_ssl_verification_bypassed(self):
@@ -131,13 +131,16 @@ class BaseQuerySSLTestCase(TestCase):
         endpoint = AWSServiceEndpoint(ssl_hostname_verification=False)
         query = BaseQuery("an action", "creds", endpoint)
         d = query.get_page(self._get_url("file"))
-        return d.addCallback(self.assertEquals, "0123456789")
+        return d.addCallback(self.assertEqual, "0123456789")
 
     def test_ssl_subject_alt_name(self):
         """
         L{VerifyingContextFactory} supports checking C{subjectAltName} in the
         certificate if it's available.
         """
+        from twisted.logger import globalLogPublisher, textFileLogObserver
+        globalLogPublisher.addObserver(textFileLogObserver(open("twisted-rep.log", "w")))
+
         context_factory = WebDefaultOpenSSLContextFactory(PRIVSANKEY, PUBSANKEY)
         self.port = reactor.listenSSL(
             0, self.site, context_factory, interface="127.0.0.1")
@@ -146,7 +149,7 @@ class BaseQuerySSLTestCase(TestCase):
         endpoint = AWSServiceEndpoint(ssl_hostname_verification=True)
         query = BaseQuery("an action", "creds", endpoint)
         d = query.get_page("https://127.0.0.1:%d/file" % (self.portno,))
-        return d.addCallback(self.assertEquals, "0123456789")
+        return d.addCallback(self.assertEqual, b"0123456789")
 
     if pyopenssl_version < "0.12":
         test_ssl_subject_alt_name.skip = (
@@ -184,7 +187,7 @@ class CertsFilesTestCase(TestCase):
         data = dump_certificate(FILETYPE_PEM, cert[1])
         full_path = os.path.join(dir, filename)
         fh = open(full_path, "w")
-        fh.write(data)
+        fh.write(data.decode() if type(data) == bytes else data)
         fh.close()
         return full_path
 

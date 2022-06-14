@@ -1205,7 +1205,7 @@ class QueryTestCase(TestCase):
     def test_get_headers_with_data(self):
         query = client.Query(
             action="PUT", creds=self.creds, bucket="mystuff",
-            object_name="/images/thing.jpg", data="BINARY IMAGE DATA")
+            object_name="/images/thing.jpg", data=b"BINARY IMAGE DATA")
 
         headers = query.get_headers(self.utc_instant)
         self.assertEqual(headers.get("Content-Type"), "image/jpeg")
