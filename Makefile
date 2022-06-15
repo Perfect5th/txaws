@@ -53,6 +53,7 @@ virtual-builds:
 	-@test -e "`which $(PYBIN)2.5`" && VERSION=2.5 make virtual-dir-setup || echo "Couldn't find $(PYBIN)2.5"
 	-@test -e "`which $(PYBIN)2.6`" && VERSION=2.6 make virtual-dir-setup || echo "Couldn't find $(PYBIN)2.6"
 	-@test -e "`which $(PYBIN)2.7`" && VERSION=2.7 make virtual-dir-setup || echo "Couldn't find $(PYBIN)2.7"
+	-@test -e "`which $(PYBIN)3.6`" && VERSION=3.6 make virtual-dir-setup || echo "Couldn't find $(PYBIN)3.6"
 
 virtual-trial: VERSION ?= 3
 virtual-trial:

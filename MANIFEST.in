@@ -1,11 +1,9 @@
-include README
+include README.rst
 include LICENSE
-include setup.py
-include txaws/client/tests/*.ssl
-include txaws/wsdl/*.wsdl
-recursive-include txaws/tests/aws4_testsuite *
+include src/txaws/client/tests/*.key
+include src/txaws/client/tests/*.crt
+include src/txaws/client/tests/*.ssl
+include src/txaws/wsdl/*.wsdl
+recursive-include src/txaws/tests/aws4_testsuite *
 
 graft bin
-prune admin
-
-recursive-include txaws *.py
