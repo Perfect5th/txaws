@@ -12,7 +12,7 @@ class StringBodyProducer(object):
         self.written = None
 
     def startProducing(self, consumer):
-        consumer.write(self.data)
+        consumer.write(self.data.encode())
         self.written = self.data
         return succeed(None)
 

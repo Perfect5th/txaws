@@ -5,7 +5,7 @@ from OpenSSL.crypto import dump_certificate, load_certificate, FILETYPE_PEM
 from OpenSSL.SSL import Error as SSLError
 from OpenSSL.version import __version__ as pyopenssl_version
 
-from twisted.internet import reactor, ssl as twisted_ssl
+from twisted.internet import defer, reactor
 from twisted.internet.ssl import DefaultOpenSSLContextFactory
 from twisted.protocols.policies import WrappingFactory
 from twisted.python import log
@@ -28,7 +28,8 @@ from txaws.service import AWSServiceEndpoint
 def sibpath(path):
     return FilePath(__file__).sibling(path).path
 
-
+# N.B., you may need to ensure these certs are installed on your system for
+# these tests to pass.
 PRIVKEY = sibpath("server.key")
 PUBKEY = sibpath("server.crt")
 BADPRIVKEY = sibpath("badprivate.ssl")
@@ -131,16 +132,13 @@ class BaseQuerySSLTestCase(TestCase):
         endpoint = AWSServiceEndpoint(ssl_hostname_verification=False)
         query = BaseQuery("an action", "creds", endpoint)
         d = query.get_page(self._get_url("file"))
-        return d.addCallback(self.assertEqual, "0123456789")
+        return d.addCallback(self.assertEqual, b"0123456789")
 
     def test_ssl_subject_alt_name(self):
         """
         L{VerifyingContextFactory} supports checking C{subjectAltName} in the
         certificate if it's available.
         """
-        from twisted.logger import globalLogPublisher, textFileLogObserver
-        globalLogPublisher.addObserver(textFileLogObserver(open("twisted-rep.log", "w")))
-
         context_factory = WebDefaultOpenSSLContextFactory(PRIVSANKEY, PUBSANKEY)
         self.port = reactor.listenSSL(
             0, self.site, context_factory, interface="127.0.0.1")
@@ -148,7 +146,7 @@ class BaseQuerySSLTestCase(TestCase):
 
         endpoint = AWSServiceEndpoint(ssl_hostname_verification=True)
         query = BaseQuery("an action", "creds", endpoint)
-        d = query.get_page("https://127.0.0.1:%d/file" % (self.portno,))
+        d = query.get_page("https://localhost:%d/file" % (self.portno,))
         return d.addCallback(self.assertEqual, b"0123456789")
 
     if pyopenssl_version < "0.12":

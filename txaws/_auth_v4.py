@@ -16,13 +16,16 @@ def sign(key, msg):
     Produce a SHA-256 HMAC for a message.
 
     @param key: The secret key to use.
-    @type key: L{bytes}
+    @type key: L{bytes} or L{str}
 
     @param msg: The message to sign.
-    @type msg: L{bytes}
+    @type msg: L{bytes} or L{str}
 
     @return: The binary (B{not} the hex) digest of the HMAC signature.
     """
+    key = key.encode() if type(key) == str else key
+    msg = msg.encode() if type(msg) == str else msg
+
     return hmac.new(key, msg, hashlib.sha256).digest()
 
 
@@ -31,26 +34,26 @@ def getSignatureKey(key, dateStamp, regionName, serviceName):
     Generate the signing key for AWS V4 requests.
 
     @param key: The secret key to use.
-    @type key: L{bytes}
+    @type key: L{str}
 
     @param dateStamp: The UTC date and time, serialized as an AWS date
         stamp.
-    @type dateStamp: L{bytes}
+    @type dateStamp: L{str}
 
     @param regionName: The name of the region.
-    @type regionName: L{bytes}
+    @type regionName: L{str}
 
     @param serviceName: The name of the service to which the request
         will be sent.
-    @type serviceName: L{bytes}
+    @type serviceName: L{str}
 
     @return: The signature.
     @rtype: L{bytes}
     """
-    kDate = sign((b'AWS4' + key), dateStamp)
+    kDate = sign(('AWS4' + key), dateStamp)
     kRegion = sign(kDate, regionName)
     kService = sign(kRegion, serviceName)
-    kSigning = sign(kService, b'aws4_request')
+    kSigning = sign(kService, 'aws4_request')
     return kSigning
 
 
@@ -78,9 +81,9 @@ def makeDateStamp(instant):
     @type instant: L{datetime.datetime}
 
     @return: The formatted date and time.
-    @rtype: L{bytes}.
+    @rtype: L{str}.
     """
-    return instant.strftime('%Y%m%d').encode()
+    return instant.strftime('%Y%m%d')
 
 
 def _make_canonical_uri(parsed):
@@ -134,19 +137,20 @@ def _make_canonical_headers(headers, headers_to_sign):
     """
     pairs = []
     for name in headers_to_sign:
+        name = name.encode()
         if name not in headers:
             continue
         values = headers[name]
         if not isinstance(values, (list, tuple)):
             values = [values]
-        comma_values = ','.join(' '.join(line.strip().split())
+        comma_values = b','.join(b' '.join(line.strip().split())
                                  for value in values
                                  for line in value.splitlines())
         pairs.append((name.lower(), comma_values))
 
-    sorted_pairs = sorted('%s:%s' % (name, value)
+    sorted_pairs = sorted(b'%s:%s' % (name, value)
                           for name, value in sorted(pairs))
-    return '\n'.join(sorted_pairs) + '\n'
+    return (b'\n'.join(sorted_pairs) + b'\n').decode()
 
 
 def _make_signed_headers(headers, headers_to_sign):
@@ -164,7 +168,7 @@ def _make_signed_headers(headers, headers_to_sign):
     @rtype: L{str}
     """
     return ";".join(header.lower() for header in sorted(headers_to_sign)
-                    if header in headers)
+                    if header.encode() in headers)
 
 
 @attr.s(frozen=True)
@@ -210,7 +214,7 @@ class _CanonicalRequest(object):
         Construct a L{_CanonicalRequest} from the provided headers.
 
         @param method: The HTTP method.
-        @type method: L{bytes}
+        @type method: L{str}
 
         @param url: The request's URL
         @type url: L{str}
@@ -295,7 +299,7 @@ class _CanonicalRequest(object):
             serialization.
         @rtype: L{str}
         """
-        return hashlib.sha256(self.serialize()).hexdigest().encode()
+        return hashlib.sha256(self.serialize()).hexdigest()
 
 
 @attr.s(frozen=True)
@@ -324,11 +328,9 @@ class _CredentialScope(object):
         Serialize this credential scope to a string.
 
         @return: The slash-delimited credential scope serialization.
-        @rtype: L{bytes}
+        @rtype: L{str}
         """
-        return b"/".join(tuple(a.encode() if type(a) == str else a
-                               for a in attr.astuple(self)) +
-                         (b'aws4_request',))
+        return "/".join(attr.astuple(self) + ('aws4_request',))
 
 
 @attr.s(frozen=True)
@@ -350,13 +352,13 @@ class _Credential(object):
 
     def serialize(self):
         """
-        Serialize this credential bundle to bytes.
+        Serialize this credential bundle to a string.
 
         @return: The serialized credential.
-        @rtype: L{byte}
+        @rtype: L{str}
         """
-        return b"/".join(
-            [self.access_key.encode(), self.credential_scope.serialize()])
+        return "/".join(
+            [self.access_key, self.credential_scope.serialize()])
 
 
 @attr.s(frozen=True)
@@ -377,7 +379,7 @@ class _SignableAWS4HMAC256Token(object):
     @type canonical_request: L{_CanonicalRequest}
     """
 
-    ALGORITHM = b"AWS4-HMAC-SHA256"
+    ALGORITHM = "AWS4-HMAC-SHA256"
 
     amz_date = attr.ib()
     credential_scope = attr.ib()
@@ -389,11 +391,11 @@ class _SignableAWS4HMAC256Token(object):
 
         @return: The serialization of this token.  This is known in
             the AWS documentation as "the string to sign."
-        @rtype: L{bytes}
+        @rtype: L{str}
         """
-        return b"\n".join([
+        return "\n".join([
             self.ALGORITHM,
-            self.amz_date.encode(),
+            self.amz_date,
             self.credential_scope.serialize(),
             self.canonical_request.hash(),
         ])
@@ -407,13 +409,13 @@ class _SignableAWS4HMAC256Token(object):
         @type: L{bytes}
 
         @return: the HMAC-256 signature.
-        @rtype: L{bytes}
+        @rtype: L{str}
         """
         return hmac.new(
             signing_key,
-            self.serialize(),
+            self.serialize().encode(),
             hashlib.sha256,
-        ).hexdigest().encode()
+        ).hexdigest()
 
 
 def _make_authorization_header(region,
@@ -461,11 +463,7 @@ def _make_authorization_header(region,
     )
 
     signature = signable.signature(
-        getSignatureKey(credentials.secret_key.encode(),
-                        date_stamp,
-                        region.encode(),
-                        service.encode())
-    )
+        getSignatureKey(credentials.secret_key, date_stamp, region, service))
 
     v4credential = _Credential(
         access_key=credentials.access_key,

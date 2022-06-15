@@ -168,12 +168,6 @@ class WebClientContextFactory(ClientContextFactory):
         return ClientContextFactory.getContext(self)
 
 
-class WebVerifyingContextFactory(VerifyingContextFactory):
-
-    def getContext(self, hostname, port):
-        return VerifyingContextFactory.getContext(self)
-
-
 @attr.s(frozen=True)
 class _QueryArgument(object):
     """
@@ -204,11 +198,11 @@ def url_context(**kw):
     a query should be issued.
 
     @param scheme: The scheme portion of the URL, eg
-        ``u"http"`` or ``u"https"``.
-    @type scheme: L{unicode}
+        ``"http"`` or ``"https"``.
+    @type scheme: L{str}
 
-    @param host: The host portion of the URL, eg ``u"example.com"``.
-    @type host: L{unicode}
+    @param host: The host portion of the URL, eg ``"example.com"``.
+    @type host: L{str}
 
     @param port: A non-default port for the URL or ``None`` for the
         scheme default.
@@ -216,13 +210,13 @@ def url_context(**kw):
 
     @param path: The path portion of the URL as a list of unicode path
         segments.
-    @type path: L{list} of L{unicode}
+    @type path: L{list} of L{str}
 
     @param query: The query arguments of the URL as a list of tuples.
         Each tuple is length one (a unicode string representing a
         no-value argument) or two (two unicode strings representing an
         argument name and value).
-    @type query: L{list} of L{tuple} of L{unicode}
+    @type query: L{list} of L{tuple} of L{str}
     """
     # It would be nice if we could use twisted.python.url.URL instead.
     # However, the way "subresources" are represented using
@@ -301,9 +295,9 @@ def _get_joined_path(ctx):
     @param ctx: A URL context.
 
     @return: The path component, un-urlencoded, but joined by slashes.
-    @rtype: L{bytes}
+    @rtype: L{str}
     """
-    return b'/' + b'/'.join(seg.encode('utf-8') for seg in ctx.path)
+    return "/" + "/".join(seg for seg in ctx.path)
 
 
 @attr.s
@@ -314,13 +308,13 @@ class RequestDetails(object):
 
     @ivar region: The name of the region the request will be submitted
         to.
-    @type region: L{bytes}
+    @type region: L{str}
 
     @ivar service: The name of the AWS service the request uses.
-    @type service: L{bytes}
+    @type service: L{str}
 
     @ivar method: The HTTP method of the request.
-    @type method: L{bytes}
+    @type method: L{str}
 
     @ivar url_context: The details of the request URL.  An object
         returned by L{url_context}.
@@ -352,11 +346,11 @@ class RequestDetails(object):
         hash cannot be computed, C{None} (which corresponds to a
         request with an unsigned payload - ie, with a payload
         unprotected from tampering by a signature).
-    @ivar content_sha256: L{unicode}
+    @ivar content_sha256: L{str}
     """
-    region = attr.ib(validator=validators.instance_of(bytes))
-    service = attr.ib(validator=validators.instance_of(bytes))
-    method = attr.ib(validator=validators.instance_of(bytes))
+    region = attr.ib(validator=validators.instance_of(str))
+    service = attr.ib(validator=validators.instance_of(str))
+    method = attr.ib(validator=validators.instance_of(str))
     url_context = attr.ib()
     headers = attr.ib(
         default=attr.Factory(Headers),
@@ -423,14 +417,14 @@ class _Query(object):
                 # We need to pass an unfortunate version of the path here: see
                 # https://github.com/twisted/txaws/issues/70
                 _get_joined_path(self._details.url_context) +
-                b"?" +
+                "?" +
                 self._details.url_context.get_encoded_query()
             ),
             # _CanonicalRequest should work harder to do case
             # canonicalization so we don't have to do this
             # lowercasing.
             headers={k.lower(): vs for (k, vs) in headers.getAllRawHeaders()},
-            headers_to_sign=(b"host", b"x-amz-date"),
+            headers_to_sign=("host", "x-amz-date"),
             payload_hash=self._details.content_sha256,
         )
 
@@ -445,10 +439,10 @@ class _Query(object):
         @type credentials: L{AWSCredentials}
 
         @param service: The AWS service name the request is for.
-        @type service: L{bytes}
+        @type service: L{str}
 
         @param region: The AWS region name the request is for.
-        @type region: L{bytes}
+        @type region: L{str}
 
         @param request: The request to sign.
         @type request: L{_CanonicalRequest}
@@ -570,8 +564,8 @@ class _Query(object):
             body_producer = FileBodyProducer(BytesIO(b""))
 
         d = agent.request(
-            method,
-            url,
+            method.encode(),
+            url.encode(),
             headers,
             body_producer,
         )
@@ -596,7 +590,7 @@ class _Query(object):
 # "give me an Agent and respect the OS conventions for proxy
 # configuration" logic.
 def _get_agent(scheme, host, reactor, contextFactory=None):
-    if scheme == b"https":
+    if scheme == "https":
         proxy_endpoint = os.environ.get("https_proxy")
         if proxy_endpoint:
             proxy_url = urllib.parse.urlparse(proxy_endpoint)
@@ -604,7 +598,7 @@ def _get_agent(scheme, host, reactor, contextFactory=None):
             return ProxyAgent(endpoint)
         else:
             if contextFactory is None:
-                contextFactory = WebVerifyingContextFactory(host)
+                return Agent(reactor)
             return Agent(reactor, contextFactory)
     else:
         proxy_endpoint = os.environ.get("http_proxy")
@@ -645,22 +639,6 @@ class BaseQuery(object):
         self.body_producer = body_producer
         self.receiver_factory = receiver_factory or StreamingBodyReceiver
 
-    @property
-    def client(self):
-        if self._client is None:
-            self._client_deprecation_warning()
-            self._client = FakeClient()
-        return self._client
-
-    @client.setter
-    def client(self, value):
-        self._client_deprecation_warning()
-        self._client = value
-
-    def _client_deprecation_warning(self):
-        warnings.warn('The client attribute on BaseQuery is deprecated and'
-                      ' will go away in future release.', stacklevel=3)
-
     def get_page(self, url, *args, **kwds):
         """
         Define our own get_page method so that we can easily override the
@@ -680,8 +658,6 @@ class BaseQuery(object):
         else:
             contextFactory = WebClientContextFactory()
         agent = _get_agent(scheme, host, self.reactor, contextFactory)
-        if scheme == "https":
-            self.client.url = url
         d = agent.request(method.encode(), url.encode(), self.request_headers,
                           self.body_producer)
         d.addCallback(self._handle_response)
@@ -716,7 +692,6 @@ class BaseQuery(object):
         Handle the HTTP response by memoing the headers and then delivering
         bytes.
         """
-        self.client.status = response.code
         self.response_headers = response.headers
         # XXX This workaround (which needs to be improved at that) for possible
         # bug in Twisted with new client:

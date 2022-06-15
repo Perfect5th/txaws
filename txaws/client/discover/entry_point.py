@@ -158,11 +158,11 @@ def main(arguments, output=None, testing_mode=None):
         try:
             command = get_command(arguments, output)
         except UsageError:
-            print >>output, USAGE_MESSAGE.strip()
+            print(USAGE_MESSAGE.strip(), file=output)
             if reactor:
                 reactor.callLater(0, reactor.stop)
-        except Exception, e:
-            print >>output, "ERROR:", str(e)
+        except Exception as e:
+            print("ERROR:", str(e), file=output)
             if reactor:
                 reactor.callLater(0, reactor.stop)
         else:

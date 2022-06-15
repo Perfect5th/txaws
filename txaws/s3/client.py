@@ -118,8 +118,8 @@ class S3Client(BaseClient):
             content_sha256 = None
 
         return RequestDetails(
-            region=REGION_US_EAST_1.encode(),
-            service=b"s3",
+            region=REGION_US_EAST_1,
+            service="s3",
             body_producer=body_producer,
             amz_headers=amz_headers,
             content_sha256=content_sha256,
@@ -145,7 +145,7 @@ class S3Client(BaseClient):
         the request.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(),
         )
         query = self._query_factory(details)
@@ -173,7 +173,7 @@ class S3Client(BaseClient):
         Create a new bucket.
         """
         details = self._details(
-            method=b"PUT",
+            method="PUT",
             url_context=self._url_context(bucket=bucket),
         )
         query = self._query_factory(details)
@@ -186,7 +186,7 @@ class S3Client(BaseClient):
         The bucket must be empty before it can be deleted.
         """
         details = self._details(
-            method=b"DELETE",
+            method="DELETE",
             url_context=self._url_context(bucket=bucket),
         )
         query = self._query_factory(details)
@@ -230,7 +230,7 @@ class S3Client(BaseClient):
         else:
             object_name = None
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name=object_name),
         )
         d = self._submit(self._query_factory(details))
@@ -276,7 +276,7 @@ class S3Client(BaseClient):
         @return: A C{Deferred} that will fire with the bucket's region.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name="?location"),
         )
         d = self._submit(self._query_factory(details))
@@ -298,7 +298,7 @@ class S3Client(BaseClient):
         configuration.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name="?lifecycle"),
         )
         d = self._submit(self._query_factory(details))
@@ -330,7 +330,7 @@ class S3Client(BaseClient):
         configuration.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name='?website'),
         )
         d = self._submit(self._query_factory(details))
@@ -355,7 +355,7 @@ class S3Client(BaseClient):
         configuration.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name="?notification"),
         )
         d = self._submit(self._query_factory(details))
@@ -379,7 +379,7 @@ class S3Client(BaseClient):
         will request the bucket's versioning configuration.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name="?versioning"),
         )
         d = self._submit(self._query_factory(details))
@@ -400,7 +400,7 @@ class S3Client(BaseClient):
         Get the access control policy for a bucket.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name="?acl"),
         )
         d = self._submit(self._query_factory(details))
@@ -413,7 +413,7 @@ class S3Client(BaseClient):
         """
         data = access_control_policy.to_xml()
         details = self._details(
-            method=b"PUT",
+            method="PUT",
             url_context=self._url_context(bucket=bucket, object_name=b"?acl"),
             body=data,
         )
@@ -446,7 +446,7 @@ class S3Client(BaseClient):
         @return: A C{Deferred} that will fire with the result of request.
         """
         details = self._details(
-            method=b"PUT",
+            method="PUT",
             url_context=self._url_context(bucket=bucket, object_name=object_name),
             headers=self._headers(content_type),
             metadata=metadata,
@@ -479,7 +479,7 @@ class S3Client(BaseClient):
         amz_headers["copy-source"] = "/%s/%s" % (source_bucket,
                                                  source_object_name)
         details = self._details(
-            method=b"PUT",
+            method="PUT",
             url_context=self._url_context(
                 bucket=dest_bucket, object_name=dest_object_name,
             ),
@@ -494,7 +494,7 @@ class S3Client(BaseClient):
         Get an object from a bucket.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name=object_name),
         )
         d = self._submit(self._query_factory(details))
@@ -506,7 +506,7 @@ class S3Client(BaseClient):
         Retrieve object metadata only.
         """
         details = self._details(
-            method=b"HEAD",
+            method="HEAD",
             url_context=self._url_context(bucket=bucket, object_name=object_name),
         )
         d = self._submit(self._query_factory(details))
@@ -520,7 +520,7 @@ class S3Client(BaseClient):
         Once deleted, there is no method to restore or undelete an object.
         """
         details = self._details(
-            method=b"DELETE",
+            method="DELETE",
             url_context=self._url_context(bucket=bucket, object_name=object_name),
         )
         d = self._submit(self._query_factory(details))
@@ -532,7 +532,7 @@ class S3Client(BaseClient):
         """
         data = access_control_policy.to_xml()
         details = self._details(
-            method=b"PUT",
+            method="PUT",
             url_context=self._url_context(
                 bucket=bucket, object_name='%s?acl' % (object_name,),
             ),
@@ -548,7 +548,7 @@ class S3Client(BaseClient):
         Get the access control policy for an object.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name='%s?acl' % (object_name,)),
         )
         d = self._submit(self._query_factory(details))
@@ -565,7 +565,7 @@ class S3Client(BaseClient):
         """
         data = RequestPayment(payer).to_xml()
         details = self._details(
-            method=b"PUT",
+            method="PUT",
             url_context=self._url_context(bucket=bucket, object_name="?requestPayment"),
             body=data,
         )
@@ -580,19 +580,19 @@ class S3Client(BaseClient):
         @return: A C{Deferred} that will fire with the name of the payer.
         """
         details = self._details(
-            method=b"GET",
+            method="GET",
             url_context=self._url_context(bucket=bucket, object_name="?requestPayment"),
         )
         d = self._submit(self._query_factory(details))
         d.addCallback(self._parse_get_request_payment)
         return d
 
-    def _parse_get_request_payment(self, xxx_todo_changeme10):
+    def _parse_get_request_payment(self, response_data):
         """
         Parse a C{RequestPaymentConfiguration} XML document and extract the
         payer.
         """
-        (response, xml_bytes) = xxx_todo_changeme10
+        (response, xml_bytes) = response_data
         return RequestPayment.from_xml(xml_bytes).payer
 
     def init_multipart_upload(self, bucket, object_name, content_type=None,
@@ -609,7 +609,7 @@ class S3Client(BaseClient):
         """
         objectname_plus = '%s?uploads' % object_name
         details = self._details(
-            method=b"POST",
+            method="POST",
             url_context=self._url_context(bucket=bucket, object_name=objectname_plus),
             headers=self._headers(content_type),
             metadata=metadata,
@@ -641,7 +641,7 @@ class S3Client(BaseClient):
         parms = 'partNumber=%s&uploadId=%s' % (str(part_number), upload_id)
         objectname_plus = '%s?%s' % (object_name, parms)
         details = self._details(
-            method=b"PUT",
+            method="PUT",
             url_context=self._url_context(bucket=bucket, object_name=objectname_plus),
             headers=self._headers(content_type),
             metadata=metadata,
@@ -670,7 +670,7 @@ class S3Client(BaseClient):
         data = self._build_complete_multipart_upload_xml(parts_list)
         objectname_plus = '%s?uploadId=%s' % (object_name, upload_id)
         details = self._details(
-            method=b"POST",
+            method="POST",
             url_context=self._url_context(bucket=bucket, object_name=objectname_plus),
             headers=self._headers(content_type),
             metadata=metadata,
@@ -786,7 +786,7 @@ class Query(BaseQuery):
     def sign(self, headers, data, url_context, instant, method,
              region=REGION_US_EAST_1):
         """Sign this query using its built in credentials."""
-        headers["host"] = url_context.get_encoded_host()
+        headers[b"host"] = url_context.get_encoded_host().encode()
 
         if data is None:
             request = _auth_v4._CanonicalRequest.from_request_components(

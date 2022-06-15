@@ -56,7 +56,7 @@ virtual-builds:
 
 virtual-trial: VERSION ?= 3
 virtual-trial:
-	-. .venv-$(VERSION)/bin/activate && python -m twisted.trial txaws.client.tests.test_ssl.BaseQuerySSLTestCase
+	-. .venv-$(VERSION)/bin/activate && python -m twisted.trial txaws
 
 
 virtual-pep8: VERSION ?= 2.7

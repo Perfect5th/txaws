@@ -1541,15 +1541,15 @@ class EC2ErrorWrapperTestCase(TestCase):
         The error wrapper should handle cases where an endpoint returns a
         non-EC2 404.
         """
-        status = "404"
-        some_html = "<html><body>{}</body></html>".format(status)
-        failure = self.make_failure(status, TwistedWebError, "not found",
+        status = b"404"
+        some_html = "<html><body>{}</body></html>".format(status).encode()
+        failure = self.make_failure(status, TwistedWebError, b"not found",
                                     some_html)
         error = self.assertRaises(
             TwistedWebError, client.ec2_error_wrapper, failure)
         self.assertTrue(isinstance(error, TwistedWebError))
         self.assertEqual(error.status, status)
-        self.assertEqual(str(error), "{} Not Found".format(status))
+        self.assertEqual(str(error), "{} Not Found".format(status.decode()))
 
     def test_500_error(self):
         failure = self.make_failure(
@@ -1708,8 +1708,9 @@ class QueryTestCase(TestCase):
             self.assertEqual(
                 error.get_error_messages(),
                 "Message for Error.Code")
-            self.assertEqual(error.status, status)
-            self.assertEqual(error.response, payload.sample_ec2_error_message)
+            self.assertEqual(error.status, status.encode())
+            self.assertEqual(error.response,
+                             payload.sample_ec2_error_message.encode())
 
         query = client.Query(
             action='BadQuery', creds=self.creds, endpoint=self.endpoint,
@@ -1734,7 +1735,7 @@ class QueryTestCase(TestCase):
 
         def check_error(error):
             self.assertTrue(isinstance(error, TwistedWebError))
-            self.assertEqual(error.status, status)
+            self.assertEqual(error.status, status.encode())
 
         query = client.Query(
             action='BadQuery', creds=self.creds, endpoint=self.endpoint,
@@ -1759,7 +1760,7 @@ class QueryTestCase(TestCase):
 
         def check_error(error):
             self.assertTrue(isinstance(error, EC2Error))
-            self.assertEqual(error.status, status)
+            self.assertEqual(error.status, status.encode())
             self.assertEqual(error.get_error_codes(), "InternalError")
             self.assertEqual(
                 error.get_error_messages(),

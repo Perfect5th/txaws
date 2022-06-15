@@ -52,14 +52,14 @@ class FakeEC2Client(object):
 
     def terminate_instances(self, *instance_ids):
         result = [(instance.instance_id, instance.instance_state,
-                   u"shutting-down") for instance in self.instances]
+                   "shutting-down") for instance in self.instances]
         return succeed(result)
 
     def get_console_output(self, instance_id):
         return ConsoleOutput(
             instance_id,
             datetime(2017, 9, 15, 8, 43, 20, tzinfo=gettz("UTC")),
-            u"Booting or whatever ...",
+            "Booting or whatever ...",
         )
 
     def describe_keypairs(self):
@@ -91,7 +91,7 @@ class FakeEC2Client(object):
         return succeed(self.volumes[0])
 
     def attach_volume(self, volume_id, instance_id, device):
-        return succeed({"status": u"attaching",
+        return succeed({"status": "attaching",
                         "attach_time": datetime(2007, 6, 6, 11, 10, 00)})
 
     def delete_volume(self, volume_id):
@@ -155,7 +155,8 @@ class FakePageGetter(object):
     def get_page_with_exception(self, url, *args, **kwds):
 
         try:
-            raise Error(self.status, "There's been an error", self.payload)
+            raise Error(self.status.encode(), b"There's been an error",
+                        self.payload.encode())
         except:
             failure = Failure()
         return fail(failure)

@@ -57,6 +57,6 @@ class ToXMLTestCase(TestCase):
         it as an instance of L{bytes} with an xml doctype prepended.
         """
         self.assertEqual(
-            """<?xml version="1.0" encoding="UTF-8"?>\n<Foo>bar</Foo>""",
+            b"""<?xml version="1.0" encoding="UTF-8"?>\n<Foo>bar</Foo>""",
             self.successResultOf(to_xml(tags.Foo("bar"))),
         )

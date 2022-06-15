@@ -55,11 +55,11 @@ class Command(object):
                                    other_params=self.parameters)
 
         def write_response(response):
-            print >> self.output, "URL: %s" % query.client.url
-            print >> self.output
-            print >> self.output, "HTTP status code: %s" % query.client.status
-            print >> self.output
-            print >> self.output, response
+            print("URL: %s" % query.client.url, file=self.output)
+            print(file=self.output)
+            print("HTTP status code: %s" % query.client.status, file=self.output)
+            print(file=self.output)
+            print(response, file=self.output)
 
         def write_error(failure):
             if failure.check(AWSError):
@@ -69,17 +69,17 @@ class Command(object):
                 if message.startswith("Error Message: "):
                     message = message[len("Error Message: "):]
 
-            print >> self.output, "URL: %s" % query.client.url
-            print >> self.output
+            print("URL: %s" % query.client.url, file=self.output)
+            print(file=self.output)
             if getattr(query.client, "status", None) is not None:
-                print >> self.output, "HTTP status code: %s" % (
-                    query.client.status,)
-                print >> self.output
-            print >> self.output, message
+                print("HTTP status code: %s" % (
+                    query.client.status,), file=self.output)
+                print(file=self.output)
+            print(message, file=self.output)
 
             if getattr(failure.value, "response", None) is not None:
-                print >> self.output
-                print >> self.output, failure.value.response
+                print(file=self.output)
+                print(failure.value.response, file=self.output)
 
         deferred = query.submit()
         deferred.addCallback(write_response)

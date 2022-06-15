@@ -3,7 +3,7 @@
 
 """Unit tests for L{Command}."""
 
-from cStringIO import StringIO
+from io import StringIO
 
 from twisted.internet.defer import succeed, fail
 from twisted.trial.unittest import TestCase

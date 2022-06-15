@@ -79,10 +79,7 @@ class sample_create_resource_record_sets_error_result(object):
     xml = """\
 <?xml version="1.0"?>
 <ErrorResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/"><Error><Type>Sender</Type><Code>InvalidChangeBatch</Code><Message>[Tried to create resource record set [name='{label}', type='{type}'] but it already exists]</Message></Error><RequestId>9197fef4-03cc-11e9-b35f-7947070744f2</RequestId></ErrorResponse>
-""".format(
-    label=label,
-    type=type,
-)
+""".format(label=label, type=type).encode()
 
 
 class sample_list_resource_record_sets_result(object):
@@ -157,7 +154,7 @@ class sample_list_hosted_zones_result(object):
     xml = """\
 <?xml version="1.0"?>
 <ListHostedZonesResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/"><HostedZones><HostedZone><Id>/hostedzone/{identifier}</Id><Name>{name}</Name><CallerReference>{reference}</CallerReference><Config><PrivateZone>false</PrivateZone></Config><ResourceRecordSetCount>{rrset_count}</ResourceRecordSetCount></HostedZone></HostedZones><IsTruncated>false</IsTruncated><MaxItems>100</MaxItems></ListHostedZonesResponse>
-""".format(**details).encode("utf-8")
+""".format(**details).encode()
 
 
 class sample_list_resource_records_with_alias_result(object):
@@ -213,7 +210,7 @@ class ListHostedZonesTestCase(TestCase):
             b"2013-04-01": {
                 b"hostedzone": Data(
                     sample_list_hosted_zones_result.xml,
-                    b"text/xml",
+                    "text/xml",
                 ),
             },
         }))
@@ -235,7 +232,7 @@ class ListResourceRecordSetsTestCase(TestCase):
                     zone_id: {
                         b"rrset": Data(
                             rrsets_xml,
-                            b"text/xml",
+                            "text/xml",
                         )
                     }
                 }
@@ -248,11 +245,9 @@ class ListResourceRecordSetsTestCase(TestCase):
     def test_soa_ns_cname(self):
         zone_id = b"ABCDEF1234"
         client = self._client_for_rrsets(
-            zone_id, sample_list_resource_record_sets_result.xml,
-        )
+            zone_id, sample_list_resource_record_sets_result.xml)
         rrsets = self.successResultOf(client.list_resource_record_sets(
-            zone_id=zone_id,
-        ))
+            zone_id=zone_id.decode()))
         expected = {
             RRSetKey(
                 label=sample_list_resource_record_sets_result.label,
@@ -321,7 +316,7 @@ class ListResourceRecordSetsTestCase(TestCase):
             ),
         }
         rrsets = self.successResultOf(
-            client.list_resource_record_sets(zone_id=zone_id),
+            client.list_resource_record_sets(zone_id=zone_id.decode()),
         )
         self.assertEqual(expected, rrsets)
 
@@ -479,8 +474,7 @@ class ListResourceRecordSetsTestCase(TestCase):
             ),
         }
         rrsets = self.successResultOf(
-            client.list_resource_record_sets(zone_id=zone_id),
-        )
+            client.list_resource_record_sets(zone_id=zone_id.decode()))
         self.assertEqual(expected, rrsets)
 
 
@@ -491,11 +485,9 @@ class ListResourceRecordSetsTestCase(TestCase):
         """
         zone_id = b"ABCDEF1234"
         client = self._client_for_rrsets(
-            zone_id, sample_list_resource_records_with_alias_result.xml,
-        )
+            zone_id, sample_list_resource_records_with_alias_result.xml)
         rrsets = self.successResultOf(client.list_resource_record_sets(
-            zone_id=zone_id,
-        ))
+            zone_id=zone_id.decode()))
         expected = {
             RRSetKey(
                 label=sample_list_resource_records_with_alias_result.normal.label,
@@ -522,8 +514,7 @@ class ListResourceRecordSetsTestCase(TestCase):
         )
         client = self._client_for_rrsets(zone_id, crazy_xml)
         rrsets = self.successResultOf(client.list_resource_record_sets(
-            zone_id=zone_id,
-        ))
+            zone_id=zone_id.decode()))
         expected = {}
         self.assertEqual(rrsets, expected)
 
@@ -536,7 +527,7 @@ class ChangeResourceRecordSetsTestCase(TestCase):
     def test_error_changes(self):
         duplicate_resource = POSTableData(
             sample_create_resource_record_sets_error_result.xml,
-            b"text/xml",
+            "text/xml",
             BAD_REQUEST,
         )
         zone_id = "1234ABCDEF"
@@ -567,7 +558,7 @@ class ChangeResourceRecordSetsTestCase(TestCase):
     def test_some_changes(self):
         change_resource = POSTableData(
             sample_change_resource_record_sets_result.xml,
-            b"text/xml",
+            "text/xml",
         )
         zone_id = "ABCDEF1234"
         agent = RequestTraversalAgent(static_resource({

@@ -3,7 +3,7 @@
 
 """Unit tests for L{get_command}, L{parse_options} and L{main} functions."""
 
-from cStringIO import StringIO
+from io import StringIO
 import os
 import sys
 

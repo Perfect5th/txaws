@@ -5,7 +5,7 @@
 
 """EC2 client support."""
 
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from datetime import datetime
 from urllib.parse import quote
 
@@ -705,9 +705,9 @@ class Parser(object):
     def get_console_output(self, xml_bytes):
         root = XML(xml_bytes)
         output_node = root.find("output")
-        instance_id = root.find("instanceId").text.decode("ascii").strip()
+        instance_id = root.find("instanceId").text.strip()
         timestamp = parse_timestamp(root.find("timestamp").text)
-        console_text = output_node.text.decode("base64").decode("utf-8")
+        console_text = b64decode(output_node.text).decode("utf-8")
         return model.ConsoleOutput(
             instance_id,
             timestamp,

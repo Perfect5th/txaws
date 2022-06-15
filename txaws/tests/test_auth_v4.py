@@ -90,10 +90,10 @@ class AWS4FunctionTestCase(unittest.SynchronousTestCase):
         A signature key generated from an AWS secret key, the current
         date, the region name, and the service name is returned.
         """
-        self.assertEqual(getSignatureKey(key=b"key",
-                                         dateStamp=b"dateStamp",
-                                         regionName=b"region",
-                                         serviceName=b"service"),
+        self.assertEqual(getSignatureKey(key="key",
+                                         dateStamp="dateStamp",
+                                         regionName="region",
+                                         serviceName="service"),
                          '\x85,P\x1e=\xba\xa4;\x13\xc6\r\xa6\x0f\xcd\xa1\xac*'
                          '\xd31I\xbbpX\x95x\x08\xb0mM\x85\xeft')
 

@@ -115,7 +115,7 @@ class _Route53Client(object):
     cooperator = attr.ib()
 
     def _details(self, op):
-        content_sha256 = sha256(op.body).hexdigest().decode("ascii")
+        content_sha256 = sha256(op.body).hexdigest()
         body_producer = FileBodyProducer(
             BytesIO(op.body), cooperator=self.cooperator,
         )
@@ -124,8 +124,8 @@ class _Route53Client(object):
             service=op.service,
             method=op.method,
             url_context=url_context(
-                scheme=self.endpoint.scheme.decode("ascii"),
-                host=self.endpoint.host.decode("ascii"),
+                scheme=self.endpoint.scheme,
+                host=self.endpoint.host,
                 port=self.endpoint.port,
                 path=op.path,
                 query=op.query,
@@ -160,7 +160,7 @@ class _Route53Client(object):
             is a problem.
         """
         d = _route53_op(
-            method=b"POST",
+            method="POST",
             path=["2013-04-01", "hostedzone"],
             body=tags.CreateHostedZoneRequest(xmlns=_NS)(
                 tags.CallerReference(caller_reference),
@@ -186,7 +186,7 @@ class _Route53Client(object):
             existing hosted zones.
         """
         d = _route53_op(
-            method=b"GET",
+            method="GET",
             path=["2013-04-01", "hostedzone"],
             extract_result=self._handle_list_hosted_zones_response,
         )
@@ -209,7 +209,7 @@ class _Route53Client(object):
         @param changes: An iterable of L{txaws.route53.interface.IRRSetChange} providers.
         """
         d = _route53_op(
-            method=b"POST",
+            method="POST",
             path=["2013-04-01", "hostedzone", zone_id, "rrset"],
             body=tags.ChangeResourceRecordSetsRequest(xmlns=_NS)(
                 tags.ChangeBatch(
@@ -227,10 +227,10 @@ class _Route53Client(object):
         """
         http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html
 
-        @type zone_id: L{unicode}
+        @type zone_id: L{str}
         @type maxitems: L{int}
         @type name: L{Name}
-        @type type: L{unicode}
+        @type type: L{str}
 
         @return: A L{Deferred} that fires with a L{dict} mapping
             L{RRSetKey} instances to corresponding L{RRSet} instances.
@@ -244,8 +244,8 @@ class _Route53Client(object):
             args.append(("type", type))
 
         d = _route53_op(
-            method=b"GET",
-            path=["2013-04-01", "hostedzone", str(zone_id), "rrset"],
+            method="GET",
+            path=["2013-04-01", "hostedzone", zone_id, "rrset"],
             query=args,
             extract_result=self._handle_list_resource_record_sets_response
         )
@@ -273,7 +273,7 @@ class _Route53Client(object):
                         "ResourceRecordSet type in result "
                         "(children=%(children)s)"
                     ),
-                    children=rrset.getchildren(),
+                    children=list(rrset),
                 )
         return result
 
@@ -331,7 +331,7 @@ class _Route53Client(object):
             been deleted.
         """
         d = _route53_op(
-            method=b"DELETE",
+            method="DELETE",
             path=["2013-04-01", "hostedzone", zone_id],
         )
         d.addCallback(self._op)
@@ -341,7 +341,7 @@ def _route53_op(body=None, **kw):
     """
     Construct an L{_Operation} representing a I{Route53} service API call.
     """
-    op = _Operation(service=b"route53", **kw)
+    op = _Operation(service="route53", **kw)
     if body is None:
         return succeed(op)
     d = to_xml(body)
