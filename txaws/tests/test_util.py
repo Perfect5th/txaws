@@ -11,11 +11,11 @@ class MiscellaneousTestCase(TestCase):
     def test_hmac_sha1(self):
         cases = [
             (binascii.unhexlify("0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b"),
-             b"Hi There", "thcxhlUFcmTii8C2+zeMjvFGvgA="),
+             b"Hi There", b"thcxhlUFcmTii8C2+zeMjvFGvgA="),
             (b"Jefe", b"what do ya want for nothing?",
-             "7/zfauXrL6LSdBbV8YTfnCWafHk="),
+             b"7/zfauXrL6LSdBbV8YTfnCWafHk="),
             (binascii.unhexlify("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-             b"\xdd" * 50, "El1zQrmsEc2Ro5r0iqF7T2PxddM="),
+             b"\xdd" * 50, b"El1zQrmsEc2Ro5r0iqF7T2PxddM="),
             ]
 
         for key, data, expected in cases:

@@ -35,15 +35,15 @@ def _create_canonical_request_fixture():
     """
     Make a L{_CanonicalRequest} instance with fixed data.
 
-    @return: A canonical request.
+    @return: A canonical request
     @rtype: L{_CanonicalRequest}
     """
     return _CanonicalRequest(method="POST",
                              canonical_uri="/",
                              canonical_query_string="qs",
                              canonical_headers="headers",
-                             signed_headers=b"signed headers",
-                             payload_hash=b"payload hash")
+                             signed_headers="signed headers",
+                             payload_hash="payload hash")
 
 
 def _create_credential_scope_fixture():
@@ -82,8 +82,8 @@ class AWS4FunctionTestCase(unittest.SynchronousTestCase):
         An SHA256 HMAC signature is returned.
         """
         self.assertEqual(sign(b"key", b"msg"),
-                         '-\x93\xcb\xc1\xbe\x16{\xcb\x167\xa4\xa2<\xbf\xf0\x1a'
-                         'xx\xf0\xc5\x0e\xe83\x95N\xa5"\x1b\xb1\xb8\xc6(')
+                         b'-\x93\xcb\xc1\xbe\x16{\xcb\x167\xa4\xa2<\xbf\xf0\x1a'
+                         b'xx\xf0\xc5\x0e\xe83\x95N\xa5"\x1b\xb1\xb8\xc6(')
 
     def test_getSignatureKey(self):
         """
@@ -94,8 +94,8 @@ class AWS4FunctionTestCase(unittest.SynchronousTestCase):
                                          dateStamp="dateStamp",
                                          regionName="region",
                                          serviceName="service"),
-                         '\x85,P\x1e=\xba\xa4;\x13\xc6\r\xa6\x0f\xcd\xa1\xac*'
-                         '\xd31I\xbbpX\x95x\x08\xb0mM\x85\xeft')
+                         b'\x85,P\x1e=\xba\xa4;\x13\xc6\r\xa6\x0f\xcd\xa1\xac*'
+                         b'\xd31I\xbbpX\x95x\x08\xb0mM\x85\xeft')
 
     def test_makeAMZDate(self):
         """
@@ -124,7 +124,7 @@ class MakeCanonicalHeadersTestCase(unittest.SynchronousTestCase):
         Canonical headers end, but do not begin, with a newline.
         """
         canonical = _make_canonical_headers(
-            headers={"header": "value"},
+            headers={b"header": b"value"},
             headers_to_sign=("header",))
         self.assertTrue(canonical.endswith("\n"))
         self.assertFalse(canonical.startswith("\n"))
@@ -134,9 +134,9 @@ class MakeCanonicalHeadersTestCase(unittest.SynchronousTestCase):
         Only headers that should be signed are included.
         """
         canonical = _make_canonical_headers(
-            headers={"header": "value",
-                     "signed-header": "signed-value",
-                     "other-signed-header": "other-signed-value"},
+            headers={b"header": b"value",
+                     b"signed-header": b"signed-value",
+                     b"other-signed-header": b"other-signed-value"},
             headers_to_sign=("signed-header", "other-signed-header"))
         self.assertEqual(canonical,
                          ("other-signed-header:other-signed-value\n"
@@ -147,9 +147,9 @@ class MakeCanonicalHeadersTestCase(unittest.SynchronousTestCase):
         The canonical headers are sorted.
         """
         canonical = _make_canonical_headers(
-            headers={"b": "2",
-                     "a": "1",
-                     "c": "3"},
+            headers={b"b": b"2",
+                     b"a": b"1",
+                     b"c": b"3"},
             headers_to_sign=('a', 'b', 'c'))
         self.assertEqual(canonical, ("a:1\n"
                                      "b:2\n"
@@ -175,14 +175,14 @@ class MakeCanonicalHeadersTestCase(unittest.SynchronousTestCase):
         A Header with multiple values in a list has those values
         joined by a comma.
         """
-        self._test_headers_multivalued({'a': ['b', 'c']})
+        self._test_headers_multivalued({b'a': [b'b', b'c']})
 
     def test_multivalued_tuple(self):
         """
         A Header with multiple values in a tuple has those values
         joined by a comma.
         """
-        self._test_headers_multivalued({'a': ('b', 'c')})
+        self._test_headers_multivalued({b'a': (b'b', b'c')})
 
     def test_multiline(self):
         """
@@ -197,7 +197,7 @@ class MakeCanonicalHeadersTestCase(unittest.SynchronousTestCase):
         spaces.
         """
         canonical = _make_canonical_headers(
-            headers={"a": "b  c  d"},
+            headers={b"a": b"b  c  d"},
             headers_to_sign=("a",),
         )
         self.assertEqual(canonical, "a:b c d\n")
@@ -213,7 +213,7 @@ class MakeSignedHeadersTestCase(unittest.TestCase):
         Only the headers' names are included.
         """
         signed_headers = _make_signed_headers(
-            headers={"header": "value"},
+            headers={b"header": b"value"},
             headers_to_sign=("header", "value"))
         self.assertIn(signed_headers, "header")
         self.assertNotIn(signed_headers, "value")
@@ -223,8 +223,8 @@ class MakeSignedHeadersTestCase(unittest.TestCase):
         The headers are delimited by a semicolon.
         """
         signed_headers = _make_signed_headers(
-            headers={"header1": "value",
-                     "header2": "value"},
+            headers={b"header1": b"value",
+                     b"header2": b"value"},
             headers_to_sign=("header1", "header2"))
         self.assertEqual(signed_headers, "header1;header2")
 
@@ -233,9 +233,9 @@ class MakeSignedHeadersTestCase(unittest.TestCase):
         The headers are sorted.
         """
         signed_headers = _make_signed_headers(
-            headers={"b": "2",
-                     "a": "1",
-                     "c": "3"},
+            headers={b"b": b"2",
+                     b"a": b"1",
+                     b"c": b"3"},
             headers_to_sign=('a', 'b', 'c'))
         self.assertEqual(signed_headers, "a;b;c")
 
@@ -244,9 +244,9 @@ class MakeSignedHeadersTestCase(unittest.TestCase):
         Only the headers that should be signed are included.
         """
         signed_headers = _make_signed_headers(
-            headers={"header": "value",
-                     "signed-header": "signed-value",
-                     "other-signed-header": "other-signed-value"},
+            headers={b"header": b"value",
+                     b"signed-header": b"signed-value",
+                     b"other-signed-header": b"other-signed-value"},
             headers_to_sign=("signed-header", "other-signed-header"))
         self.assertEqual(signed_headers, 'other-signed-header;signed-header')
 
@@ -300,9 +300,9 @@ class MakeCanonicalURITestCase(unittest.SynchronousTestCase):
         """
         A path is URL encoded when necessary.
         """
-        parsed = urllib.parse.urlparse('https://www.amazon.com/\xe2')
+        parsed = urllib.parse.urlparse("https://www.amazon.com/é")
         self.assertEqual(_make_canonical_uri(parsed),
-                         "https://www.amazon.com/%E2")
+                         "https://www.amazon.com/%C3%A9")
 
 
 class MakeCanonicalQueryStringTestCase(unittest.SynchronousTestCase):
@@ -378,19 +378,20 @@ class CanonicalRequestTestCase(unittest.SynchronousTestCase):
         U{http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html}
         """
         self.assertEqual(self.request.serialize(),
-                         (b"POST\n"
-                          b"/\n"
-                          b"qs\n"
-                          b"headers\n"
-                          b"signed headers\n"
-                          b"payload hash"))
+                         ("POST\n"
+                          "/\n"
+                          "qs\n"
+                          "headers\n"
+                          "signed headers\n"
+                          "payload hash"))
 
     def test_hash(self):
         """
         A canonical request's hash is the SHA-256 of its serialization.
         """
-        self.assertEqual(self.request.hash(),
-                         hashlib.sha256(self.request.serialize()).hexdigest())
+        self.assertEqual(
+            self.request.hash(),
+            hashlib.sha256(self.request.serialize().encode()).hexdigest())
 
     def test_hash_sanity(self):
         """
@@ -410,8 +411,8 @@ class CanonicalRequestTestCase(unittest.SynchronousTestCase):
         canonical_request = _CanonicalRequest.from_request_components(
             method="POST",
             url=url,
-            headers={"header1": "value1",
-                     "header2": "value2"},
+            headers={b"header1": b"value1",
+                     b"header2": b"value2"},
             headers_to_sign=("header1", "header2"),
             payload_hash=b"abcdef",
         )
@@ -437,8 +438,8 @@ class CanonicalRequestTestCase(unittest.SynchronousTestCase):
         canonical_request = _CanonicalRequest.from_request_components(
             method="POST",
             url=url,
-            headers={"header1": "value1",
-                     "header2": "value2"},
+            headers={b"header1": b"value1",
+                     b"header2": b"value2"},
             headers_to_sign=("header1", "header2"),
             payload_hash=None,
         )
@@ -451,7 +452,7 @@ class CanonicalRequestTestCase(unittest.SynchronousTestCase):
                          ("header1:value1\n"
                           "header2:value2\n"))
         self.assertEqual(canonical_request.signed_headers, "header1;header2")
-        self.assertEqual(canonical_request.payload_hash, b"UNSIGNED-PAYLOAD")
+        self.assertEqual(canonical_request.payload_hash, "UNSIGNED-PAYLOAD")
 
     def test_from_request_components_and_payload(self):
         """
@@ -462,8 +463,8 @@ class CanonicalRequestTestCase(unittest.SynchronousTestCase):
         canonical_request = _CanonicalRequest.from_request_components_and_payload(
             method="POST",
             url=url,
-            headers={"header1": "value1",
-                     "header2": "value2"},
+            headers={b"header1": b"value1",
+                     b"header2": b"value2"},
             headers_to_sign=("header1", "header2"),
             payload=b"payload"
         )
@@ -524,7 +525,7 @@ class CredentialTestCase(unittest.SynchronousTestCase):
         scope = _create_credential_scope_fixture()
         credential = _create_credential_fixture(scope)
 
-        self.assertEqual(credential.serialize(), b"key/" + scope.serialize())
+        self.assertEqual(credential.serialize(), "key/" + scope.serialize())
 
 
 class SignableAWS4HMAC256TokenTestCase(unittest.SynchronousTestCase):
@@ -559,13 +560,13 @@ class SignableAWS4HMAC256TokenTestCase(unittest.SynchronousTestCase):
         """
         serialized = self.token.serialize()
         self.assertEqual(serialized,
-                         (b"AWS4-HMAC-SHA256\n"
-                          b"%(date)s\n"
-                          b"%(scope)s\n"
-                          b"%(request_hash)s" % {
-                              b"date": self.amz_date.encode(),
-                              b"scope": self.scope.serialize(),
-                              b"request_hash": self.request.hash(),
+                         ("AWS4-HMAC-SHA256\n"
+                          "%(date)s\n"
+                          "%(scope)s\n"
+                          "%(request_hash)s" % {
+                              "date": self.amz_date,
+                              "scope": self.scope.serialize(),
+                              "request_hash": self.request.hash(),
                           }))
 
     def test_signature(self):
@@ -575,7 +576,7 @@ class SignableAWS4HMAC256TokenTestCase(unittest.SynchronousTestCase):
         """
         serialized = self.token.serialize()
         serialized_hmac = hmac.new(self.key,
-                                   serialized,
+                                   serialized.encode(),
                                    hashlib.sha256).hexdigest()
         self.assertEqual(self.token.signature(self.key), serialized_hmac)
 
@@ -601,11 +602,11 @@ class MakeAuthorizationHeaderTestCase(unittest.TestCase):
             method="POST",
             url="/",
             headers={
-                "Some header": "X",
-                "content-type": "some/type",
-                "x-amz-target": "the target",
-                "host": "host",
-                "x-amz-date": "the date",
+                b"Some header": b"X",
+                b"content-type": b"some/type",
+                b"x-amz-target": b"the target",
+                b"host": b"host",
+                b"x-amz-date": b"the date",
             },
             headers_to_sign=('content-type', 'host', 'x-amz-date',
                              'x-amz-security-token', 'x-amz-target'),

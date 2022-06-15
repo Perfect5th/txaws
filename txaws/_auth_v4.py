@@ -178,7 +178,7 @@ class _CanonicalRequest(object):
     U{http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html}
 
     @ivar method: The HTTP method.
-    @type method: L{bytes}
+    @type method: L{str}
 
     @ivar canonical_uri: The 'canonical URI'.
         B{N.B.  This should not the full URI!} It should instead be just
@@ -190,14 +190,14 @@ class _CanonicalRequest(object):
 
     @type canonical_headers: The 'canonical headers'.  See
         L{_make_canonical_headers}.
-    @ivar canonical_headers: L{bytes}
+    @ivar canonical_headers: L{str}
 
     @ivar signed_headers: The 'signed headers'.  See
         L{_make_signed_headers}
-    @type signed_headers: L{bytes}
+    @type signed_headers: L{str}
 
     @ivar payload_hash: The SHA256 of the request's body.
-    @type payload_hash: L{bytes}
+    @type payload_hash: L{str}
     """
     method = attr.ib()
     canonical_uri = attr.ib()
@@ -246,7 +246,7 @@ class _CanonicalRequest(object):
             # purposes of signing.  The x-amz-content-sha256 header
             # sent to AWS in the request must have the exact same
             # value for this to work.
-            payload_hash = b"UNSIGNED-PAYLOAD"
+            payload_hash = "UNSIGNED-PAYLOAD"
         return cls(
             method=method,
             canonical_uri=_make_canonical_uri(parsed),
@@ -288,8 +288,7 @@ class _CanonicalRequest(object):
             request.
         @rtype: L{str}
         """
-        return b'\n'.join(a.encode() if type(a) == str else a
-                          for a in attr.astuple(self))
+        return '\n'.join(a for a in attr.astuple(self))
 
     def hash(self):
         """
@@ -299,7 +298,7 @@ class _CanonicalRequest(object):
             serialization.
         @rtype: L{str}
         """
-        return hashlib.sha256(self.serialize()).hexdigest()
+        return hashlib.sha256(self.serialize().encode()).hexdigest()
 
 
 @attr.s(frozen=True)

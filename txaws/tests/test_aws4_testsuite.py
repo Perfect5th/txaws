@@ -96,9 +96,7 @@ class _AWSRequest(object):
 
         method = request.method.decode()
         path = request.uri.decode()
-        headers = {k.decode(): [v.decode() for v in vs]
-                   for k, vs in
-                   request.requestHeaders.getAllRawHeaders()}
+        headers = dict(request.requestHeaders.getAllRawHeaders())
 
         # what comes after the empty line is a
         body = byte_string.split(blank_line, 1)[-1]
@@ -164,13 +162,13 @@ class _AWS4TestSuiteTestCaseMixin(object):
             request = _AWSRequest.frombytes(f.read())
 
         with canonical_request_path.open() as f:
-            serialized_canonical_request = f.read()
+            serialized_canonical_request = f.read().decode()
 
         canonical_request = _CanonicalRequest.from_request_components_and_payload(
             method=request.method,
             url=request.path,
             headers=request.headers,
-            headers_to_sign=list(request.headers.keys()),
+            headers_to_sign=list(k.decode() for k in request.headers.keys()),
             payload=request.body,
         )
 
@@ -187,7 +185,7 @@ class _AWS4TestSuiteTestCaseMixin(object):
         string_to_sign_path = self._globOne(path, "*.sts")
 
         with string_to_sign_path.open() as f:
-            string_to_sign = f.read()
+            string_to_sign = f.read().decode()
 
         token = _SignableAWS4HMAC256Token(
             makeAMZDate(self.instant),
@@ -206,7 +204,7 @@ class _AWS4TestSuiteTestCaseMixin(object):
         authorization_path = self._globOne(path, '*.authz')
 
         with authorization_path.open() as f:
-            expected_authorization = f.read()
+            expected_authorization = f.read().decode()
 
         signed = _make_authorization_header(self.region,
                                             self.service,

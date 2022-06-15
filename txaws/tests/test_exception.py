@@ -16,7 +16,7 @@ class AWSErrorTestCase(TestCase):
     def test_creation(self):
         status = "500"
         error = AWSError("<dummy1 />", int(status), "Server Error", "<dummy2 />")
-        self.assertEquals(error.status, status)
+        self.assertEquals(error.status, status.encode())
         self.assertEquals(error.response, "<dummy2 />")
         self.assertEquals(error.original, "<dummy1 />")
         self.assertEquals(error.errors, [])

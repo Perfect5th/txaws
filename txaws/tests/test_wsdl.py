@@ -48,7 +48,7 @@ class NodeSchemaTestCase(WsdlBaseTestCase):
         schema = NodeSchema("foo", [LeafSchema("bar")])
         foo = NodeItem(schema)
         foo.bar = "spam"
-        self.assertEqual("<foo><bar>spam</bar></foo>",
+        self.assertEqual(b"<foo><bar>spam</bar></foo>",
                          etree.tostring(schema.dump(foo)))
 
     def test_dump_with_multiple_children(self):
@@ -59,7 +59,7 @@ class NodeSchemaTestCase(WsdlBaseTestCase):
         foo = NodeItem(schema)
         foo.bar = "spam1"
         foo.egg = "spam2"
-        self.assertEqual("<foo><bar>spam1</bar><egg>spam2</egg></foo>",
+        self.assertEqual(b"<foo><bar>spam1</bar><egg>spam2</egg></foo>",
                          etree.tostring(schema.dump(foo)))
 
     def test_dump_with_missing_attribute(self):
@@ -69,7 +69,7 @@ class NodeSchemaTestCase(WsdlBaseTestCase):
         schema = NodeSchema("foo")
         schema.add(LeafSchema("bar"), min_occurs=0)
         foo = NodeItem(schema)
-        self.assertEqual("<foo/>", etree.tostring(schema.dump(foo)))
+        self.assertEqual(b"<foo/>", etree.tostring(schema.dump(foo)))
 
 
 class NodeItemTestCase(WsdlBaseTestCase):
@@ -186,7 +186,7 @@ class NodeItemTestCase(WsdlBaseTestCase):
         root = etree.fromstring("<foo/>")
         foo = schema.create(root)
         foo.bar.egg = "spam"
-        self.assertEqual("<foo><bar><egg>spam</egg></bar></foo>",
+        self.assertEqual(b"<foo><bar><egg>spam</egg></bar></foo>",
                          etree.tostring(schema.dump(foo)))
 
     def test_set_with_unknown_tag(self):
@@ -230,7 +230,7 @@ class NodeItemTestCase(WsdlBaseTestCase):
         root = etree.fromstring("<foo><bar>spam</bar></foo>")
         foo = schema.create(root)
         foo.bar = None
-        self.assertEqual("<foo/>", etree.tostring(schema.dump(foo)))
+        self.assertEqual(b"<foo/>", etree.tostring(schema.dump(foo)))
 
     def test_set_with_non_leaf_tag(self):
         """
@@ -253,7 +253,7 @@ class NodeItemTestCase(WsdlBaseTestCase):
         root = etree.fromstring("<foo><bar><egg>spam</egg></bar></foo>")
         foo = schema.create(root)
         foo.bar = None
-        self.assertEqual("<foo/>", etree.tostring(schema.dump(foo)))
+        self.assertEqual(b"<foo/>", etree.tostring(schema.dump(foo)))
 
     def test_set_with_sequence_tag(self):
         """
@@ -268,7 +268,7 @@ class NodeItemTestCase(WsdlBaseTestCase):
                                 "/foo>")
         foo = schema.create(root)
         foo.bar = None
-        self.assertEqual("<foo><bar/></foo>", etree.tostring(schema.dump(foo)))
+        self.assertEqual(b"<foo><bar/></foo>", etree.tostring(schema.dump(foo)))
 
     def test_set_with_required_non_leaf_tag(self):
         """
@@ -335,7 +335,7 @@ class SequenceSchemaTestCase(WsdlBaseTestCase):
         schema = SequenceSchema("foo", NodeSchema("item", [LeafSchema("bar")]))
         foo = SequenceItem(schema)
         foo.append().bar = "egg"
-        self.assertEqual("<foo><item><bar>egg</bar></item></foo>",
+        self.assertEqual(b"<foo><item><bar>egg</bar></item></foo>",
                          etree.tostring(schema.dump(foo)))
 
     def test_dump_with_many_items(self):
@@ -346,10 +346,10 @@ class SequenceSchemaTestCase(WsdlBaseTestCase):
         foo = SequenceItem(schema)
         foo.append().bar = "spam0"
         foo.append().bar = "spam1"
-        self.assertEqual("<foo>"
-                         "<item><bar>spam0</bar></item>"
-                         "<item><bar>spam1</bar></item>"
-                         "</foo>",
+        self.assertEqual(b"<foo>"
+                         b"<item><bar>spam0</bar></item>"
+                         b"<item><bar>spam1</bar></item>"
+                         b"</foo>",
                          etree.tostring(schema.dump(foo)))
 
 
@@ -420,10 +420,10 @@ class SequenceItemTestCase(WsdlBaseTestCase):
         foo = schema.create(root)
         foo.append().bar = "egg1"
         self.assertEqual("egg1", foo[1].bar)
-        self.assertEqual("<foo>"
-                         "<item><bar>egg0</bar></item>"
-                         "<item><bar>egg1</bar></item>"
-                         "</foo>",
+        self.assertEqual(b"<foo>"
+                         b"<item><bar>egg0</bar></item>"
+                         b"<item><bar>egg1</bar></item>"
+                         b"</foo>",
                          etree.tostring(schema.dump(foo)))
 
     def test_append_with_too_many_items(self):
@@ -452,7 +452,7 @@ class SequenceItemTestCase(WsdlBaseTestCase):
         foo = schema.create(root)
         del foo[0]
         self.assertEqual("egg1", foo[0].bar)
-        self.assertEqual("<foo><item><bar>egg1</bar></item></foo>",
+        self.assertEqual(b"<foo><item><bar>egg1</bar></item></foo>",
                          etree.tostring(schema.dump(foo)))
 
     def test_delitem_with_not_enough_items(self):
@@ -481,7 +481,7 @@ class SequenceItemTestCase(WsdlBaseTestCase):
         foo = schema.create(root)
         foo.remove(foo[0])
         self.assertEqual("egg1", foo[0].bar)
-        self.assertEqual("<foo><item><bar>egg1</bar></item></foo>",
+        self.assertEqual(b"<foo><item><bar>egg1</bar></item></foo>",
                          etree.tostring(schema.dump(foo)))
 
     def test_remove_with_non_existing_item(self):
@@ -534,7 +534,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
         self.assertEqual("foo", response.keyName)
         self.assertEqual("9a:81:96:46", response.keyFingerprint)
         self.assertEqual("MIIEowIBAAKCAQEAi", response.keyMaterial)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_parse_delete_key_pair_response(self):
         """Parse a DeleteKeyPairResponse payload."""
@@ -548,7 +548,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
         response = schema.create(root)
         self.assertEqual("acc41b73-4c47-4f80", response.requestId)
         self.assertEqual("true", response.return_)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_parse_describe_key_pairs_response(self):
         """Parse a DescribeKeyPairsResponse payload."""
@@ -568,7 +568,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
         self.assertEqual("3ef0aa1d-57dd-4272", response.requestId)
         self.assertEqual("europe-key", response.keySet[0].keyName)
         self.assertEqual("94:88:29:60:cf", response.keySet[0].keyFingerprint)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_modify_describe_key_pairs_response(self):
         """Modify a DescribeKeyPairsResponse payload."""
@@ -595,7 +595,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                "</item>"
                "</keySet>"
                "</DescribeKeyPairsResponse>" % xmlns)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_create_describe_key_pairs_response(self):
         """Create a DescribeKeyPairsResponse payload."""
@@ -615,7 +615,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                "</item>"
                "</keySet>"
                "</DescribeKeyPairsResponse>" % xmlns)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_create_describe_addresses_response(self):
         """Create a DescribeAddressesResponse payload.
@@ -634,7 +634,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                "</item>"
                "</addressesSet>"
                "</DescribeAddressesResponse>" % xmlns)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_create_describe_instances_response_with_username(self):
         """Create a DescribeInstancesResponse payload.
@@ -658,7 +658,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                "</item>"
                "</reservationSet>"
                "</DescribeInstancesResponse>" % xmlns)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_create_describe_instances_response(self):
         """Create a DescribeInstancesResponse payload.
@@ -682,7 +682,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                "</item>"
                "</reservationSet>"
                "</DescribeInstancesResponse>" % xmlns)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_parse_describe_security_groups_response(self):
         """Parse a DescribeSecurityGroupsResponse payload."""
@@ -718,7 +718,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                          response.securityGroupInfo[0].ownerId)
         self.assertEqual("WebServers", response.securityGroupInfo[0].groupName)
         self.assertEqual("Web", response.securityGroupInfo[0].groupDescription)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_modify_describe_security_groups_response(self):
         """Modify a DescribeSecurityGroupsResponse payload."""
@@ -775,7 +775,7 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                "</item>"
                "</securityGroupInfo>"
                "</DescribeSecurityGroupsResponse>" % xmlns)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))
 
     def test_create_describe_security_groups_response(self):
         """Create a DescribeSecurityGroupsResponse payload."""
@@ -797,4 +797,4 @@ class WDSLParserTestCase(WsdlBaseTestCase):
                "</item>"
                "</securityGroupInfo>"
                "</DescribeSecurityGroupsResponse>" % xmlns)
-        self.assertEqual(xml, etree.tostring(schema.dump(response)))
+        self.assertEqual(xml.encode(), etree.tostring(schema.dump(response)))

@@ -87,7 +87,7 @@ def s3_integration_tests(get_client):
             )
             self.assertEqual(objects.is_truncated, "false")
 
-            self.assertEqual(str(len(object_data)), created[0].size)
+            self.assertEqual(len(object_data), int(created[0].size))
 
             data = yield client.get_object(bucket_name, object_name)
             self.assertEqual(object_data, data)
